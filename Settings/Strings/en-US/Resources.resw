@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppTitleBar.Title" xml:space="preserve">
+	<value>AutoAwake</value>
+	<comment>Title of the settings window.</comment>
+  </data>
+  <data name="SettingsLoadError" xml:space="preserve"><value>Could not load the settings file.</value></data>
+  <data name="SettingsInstanceError" xml:space="preserve"><value>Could not check whether the settings app is already running.</value></data>
+  <data name="SettingsSaveError" xml:space="preserve"><value>Could not save the settings. Correct the values or resolve the file error; changes will be retried on the next edit.</value></data>
+  <data name="GeneralNavigation.Content" xml:space="preserve"><value>General</value></data>
+  <data name="CpuNavigation.Content" xml:space="preserve"><value>CPU usage</value></data>
+  <data name="ApplicationsNavigation.Content" xml:space="preserve"><value>Apps</value></data>
+  <data name="IntervalLabel.Text" xml:space="preserve"><value>Monitoring frequency</value></data>
+  <data name="IntervalUnit.Text" xml:space="preserve"><value>seconds</value></data>
+  <data name="IntervalInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Monitoring frequency in seconds</value></data>
+  <data name="CpuEnabled.Content" xml:space="preserve"><value>Prevent sleep when CPU usage is high</value></data>
+  <data name="CpuThresholdLabel.Text" xml:space="preserve"><value>Usage:</value></data>
+  <data name="CpuThresholdSlider.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>CPU usage threshold</value></data>
+  <data name="CpuThresholdInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>CPU usage threshold in percent</value></data>
+  <data name="CpuActionLabel.Text" xml:space="preserve"><value>Action:</value></data>
+  <data name="CpuAction.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>CPU monitoring action</value></data>
+  <data name="ActionNoSleep.Content" xml:space="preserve"><value>Prevent sleep</value></data>
+  <data name="ActionKeepDisplay.Content" xml:space="preserve"><value>Prevent sleep and display off</value></data>
+  <data name="AddApplication.Text" xml:space="preserve"><value>Add app</value></data>
+  <data name="DeleteApplication.Text" xml:space="preserve"><value>Delete</value></data>
+  <data name="AddApplicationButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Add app</value></data>
+  <data name="DeleteApplicationButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Delete</value></data>
+  <data name="ApplicationAction.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>App sleep prevention mode</value></data>
+  <data name="ApplicationErrorTitle" xml:space="preserve"><value>Could not add app</value></data>
+  <data name="DuplicateApplication" xml:space="preserve"><value>An app with this path has already been added.</value></data>
+  <data name="ApplicationPickerError" xml:space="preserve"><value>Could not add the executable file.</value></data>
+  <data name="ApplicationDropInvalid" xml:space="preserve"><value>Drop an executable file (.exe).</value></data>
+  <data name="DialogClose" xml:space="preserve"><value>Close</value></data>
+</root>

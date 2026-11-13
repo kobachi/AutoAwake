@@ -1,0 +1,75 @@
+#pragma code_page(65001)
+#include <windows.h>
+#include "resource.h"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDI_CLOSED ICON "closed.ico"
+IDI_OPEN ICON "open.ico"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+STRINGTABLE
+BEGIN
+    IDS_TITLE "AutoAwake"
+    IDS_EXIT "Exit"
+    IDS_MENU_CREATE_ERROR "Could not create the tray menu."
+    IDS_MENU_DISPLAY_ERROR "Could not display the tray menu."
+    IDS_TRAY_RESTORE_ERROR "Could not restore the tray icon."
+    IDS_TASKBAR_MESSAGE_ERROR "Could not register the taskbar message."
+    IDS_ICON_LOAD_ERROR "Could not load the tray icon."
+    IDS_WINDOW_CLASS_ERROR "Could not register the window class."
+    IDS_WINDOW_CREATE_ERROR "Could not create the tray window."
+    IDS_TRAY_ADD_ERROR "Could not add the tray icon."
+    IDS_MESSAGE_LOOP_ERROR "The message loop failed."
+    IDS_SETTINGS_IO_ERROR "Could not access the settings file in %APPDATA%\\AutoAwake."
+    IDS_SETTINGS_ENCODING_ERROR "The settings file must use UTF-16 LE with a BOM."
+    IDS_SETTINGS_VALUE_ERROR "General/CpuUsageEnabled must be 0 or 1."
+    IDS_SETTINGS_INTERVAL_ERROR "General/Interval must be a whole number between 1 and 86400 seconds."
+    IDS_SETTINGS_CPU_THRESHOLD_ERROR "General/CpuUsageThreshold must be a whole number from 0 to 100."
+    IDS_SETTINGS_CPU_ACTION_ERROR "General/CpuUsageAction must be NoSleep or KeepDisplay."
+    IDS_SETTINGS_WATCH_ERROR "Could not monitor the settings directory. AutoAwake will exit."
+    IDS_CPU_COUNTER_ERROR "Could not read the CPU performance counter. AutoAwake will exit."
+    IDS_POWER_REQUEST_ERROR "Could not change the sleep prevention request. AutoAwake will exit."
+    IDS_CPU_TIMER_ERROR "Could not start the CPU monitoring timer. AutoAwake will exit."
+    IDS_TRAY_UPDATE_ERROR "Could not update the tray icon. AutoAwake will exit."
+    IDS_SETTINGS_APPLICATION_PATH_ERROR "Each application section must have an absolute executable Path."
+    IDS_SETTINGS_APPLICATION_ACTION_ERROR "Each application section must have an Action of NoSleep or KeepDisplay."
+    IDS_APPLICATION_MONITOR_ERROR "Could not inspect a matching process or enumerate processes or windows. AutoAwake will exit."
+    IDS_APPLICATION_TIMER_ERROR "Could not start the application monitoring timer. AutoAwake will exit."
+    IDS_SETTINGS_APPLICATION_VISIBLE_WINDOW_ERROR "Application VisibleWindowOnly must be 0 or 1."
+    IDS_SETTINGS_LAUNCH_ERROR "Could not launch Settings.exe from the AutoAwake folder."
+    IDS_INSTANCE_ERROR "Could not check whether AutoAwake is already running."
+END
+
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_TITLE "AutoAwake"
+    IDS_EXIT "終了"
+    IDS_MENU_CREATE_ERROR "トレイメニューを作成できませんでした。"
+    IDS_MENU_DISPLAY_ERROR "トレイメニューを表示できませんでした。"
+    IDS_TRAY_RESTORE_ERROR "トレイアイコンを復元できませんでした。"
+    IDS_TASKBAR_MESSAGE_ERROR "タスクバーのメッセージを登録できませんでした。"
+    IDS_ICON_LOAD_ERROR "トレイアイコンを読み込めませんでした。"
+    IDS_WINDOW_CLASS_ERROR "ウィンドウクラスを登録できませんでした。"
+    IDS_WINDOW_CREATE_ERROR "ウィンドウを作成できませんでした。"
+    IDS_TRAY_ADD_ERROR "トレイアイコンを追加できませんでした。"
+    IDS_MESSAGE_LOOP_ERROR "メッセージループでエラーが発生しました。"
+    IDS_SETTINGS_IO_ERROR "%APPDATA%\\AutoAwake の設定ファイルにアクセスできませんでした。"
+    IDS_SETTINGS_ENCODING_ERROR "設定ファイルは BOM 付き UTF-16 LE で保存してください。"
+    IDS_SETTINGS_VALUE_ERROR "General/CpuUsageEnabled には 0 または 1 を指定してください。"
+    IDS_SETTINGS_INTERVAL_ERROR "General/Interval には 1 から 86400 までの整数を秒単位で指定してください。"
+    IDS_SETTINGS_CPU_THRESHOLD_ERROR "General/CpuUsageThreshold には 0 から 100 までの整数を指定してください。"
+    IDS_SETTINGS_CPU_ACTION_ERROR "General/CpuUsageAction には NoSleep または KeepDisplay を指定してください。"
+    IDS_SETTINGS_WATCH_ERROR "設定フォルダーを監視できません。AutoAwake を終了します。"
+    IDS_CPU_COUNTER_ERROR "CPU のパフォーマンスカウンターを読み取れません。AutoAwake を終了します。"
+    IDS_POWER_REQUEST_ERROR "スリープ防止要求を変更できません。AutoAwake を終了します。"
+    IDS_CPU_TIMER_ERROR "CPU 監視タイマーを開始できません。AutoAwake を終了します。"
+    IDS_TRAY_UPDATE_ERROR "トレイアイコンを更新できません。AutoAwake を終了します。"
+    IDS_SETTINGS_APPLICATION_PATH_ERROR "各アプリのセクションには実行ファイルの絶対パスを Path に指定してください。"
+    IDS_SETTINGS_APPLICATION_ACTION_ERROR "各アプリのセクションの Action には NoSleep または KeepDisplay を指定してください。"
+    IDS_APPLICATION_MONITOR_ERROR "プロセスまたはウィンドウを列挙するか、対象のプロセスを確認できません。AutoAwake を終了します。"
+    IDS_APPLICATION_TIMER_ERROR "アプリ監視タイマーを開始できません。AutoAwake を終了します。"
+    IDS_SETTINGS_APPLICATION_VISIBLE_WINDOW_ERROR "アプリの VisibleWindowOnly には 0 または 1 を指定してください。"
+    IDS_SETTINGS_LAUNCH_ERROR "AutoAwake と同じフォルダーの Settings.exe を起動できませんでした。"
+    IDS_INSTANCE_ERROR "AutoAwake が既に起動しているか確認できませんでした。"
+END

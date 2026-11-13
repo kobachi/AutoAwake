@@ -1,0 +1,308 @@
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <shellapi.h>
+#include <strsafe.h>
+#include <stdio.h>
+#include <wchar.h>
+
+static EXECUTION_STATE last_flags;
+static int monitor_errors;
+static const wchar_t *module_path = L"C:\\Program Files\\AutoAwake\\autoawake.exe";
+static BOOL module_path_failure;
+static BOOL launch_failure;
+static int launch_count;
+static wchar_t launched_path[32768];
+static BOOL mutex_failure;
+
+static HANDLE WINAPI test_create_mutex(LPSECURITY_ATTRIBUTES attributes, BOOL owner, LPCWSTR name)
+{
+	HANDLE handle;
+	(void)attributes;
+	(void)owner;
+	(void)name;
+	if (mutex_failure) {
+		SetLastError(ERROR_ACCESS_DENIED);
+		return NULL;
+	}
+	handle = CreateEventW(NULL, FALSE, FALSE, NULL);
+	if (handle) SetLastError(ERROR_ALREADY_EXISTS);
+	return handle;
+}
+
+static int WINAPI test_load_string(HINSTANCE instance, UINT id, LPWSTR buffer, int capacity)
+{
+	(void)instance;
+	(void)id;
+	return SUCCEEDED(StringCchCopyW(buffer, capacity, L"test")) ? 4 : 0;
+}
+
+static DWORD WINAPI test_module_filename(HMODULE module, LPWSTR path, DWORD size)
+{
+	(void)module;
+	if (module_path_failure) return 0;
+	if (FAILED(StringCchCopyW(path, size, module_path))) return size;
+	return (DWORD)wcslen(path);
+}
+
+static HINSTANCE WINAPI test_shell_execute(HWND window, LPCWSTR operation, LPCWSTR file,
+	LPCWSTR parameters, LPCWSTR directory, INT show)
+{
+	(void)window;
+	(void)operation;
+	(void)parameters;
+	(void)directory;
+	(void)show;
+	++launch_count;
+	if (FAILED(StringCchCopyW(launched_path, ARRAYSIZE(launched_path), file))) return (HINSTANCE)(INT_PTR)SE_ERR_OOM;
+	return (HINSTANCE)(INT_PTR)(launch_failure ? SE_ERR_FNF : 33);
+}
+
+/* Records a simulated sleep prevention request.
+ * flags: Execution-state flags requested by the monitor.
+ */
+static EXECUTION_STATE WINAPI test_execution_state(EXECUTION_STATE flags)
+{
+	last_flags = flags;
+	return flags;
+}
+
+/* Simulates a successful tray icon operation.
+ * message: Requested notification-area operation, unused.
+ * data: Tray icon data, unused.
+ */
+static BOOL WINAPI test_notify_icon(DWORD message, PNOTIFYICONDATAW data)
+{
+	(void)message;
+	(void)data;
+	return TRUE;
+}
+
+/* Counts simulated error dialogs without displaying them.
+ * window: Dialog owner, unused.
+ * message: Dialog text, unused.
+ * title: Dialog title, unused.
+ * type: Dialog style flags, unused.
+ */
+static int WINAPI test_message_box(HWND window, LPCWSTR message, LPCWSTR title, UINT type)
+{
+	(void)window;
+	(void)message;
+	(void)title;
+	(void)type;
+	++monitor_errors;
+	return IDOK;
+}
+
+#define SetThreadExecutionState test_execution_state
+#define Shell_NotifyIconW test_notify_icon
+#define MessageBoxW test_message_box
+#define GetModuleFileNameW test_module_filename
+#define ShellExecuteW test_shell_execute
+#define CreateMutexW test_create_mutex
+#define LoadStringW test_load_string
+#include "..\main.c"
+#undef CreateMutexW
+#undef LoadStringW
+#undef SetThreadExecutionState
+#undef Shell_NotifyIconW
+#undef MessageBoxW
+#undef GetModuleFileNameW
+#undef ShellExecuteW
+
+#define CHECK(condition) do { if (!(condition)) { fprintf(stderr, "FAIL line %d: %s\n", __LINE__, #condition); return 1; } } while (0)
+
+/* Writes a UTF-16 test settings file.
+ * path: Destination file path.
+ * contents: Null-terminated contents, including any desired BOM.
+ */
+static BOOL write_settings(const wchar_t *path, const wchar_t *contents)
+{
+	HANDLE file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	DWORD written;
+	DWORD bytes = (DWORD)(wcslen(contents) * sizeof(wchar_t));
+	BOOL ok;
+	/* The test settings file could not be created or opened. */
+	if (file == INVALID_HANDLE_VALUE) return FALSE;
+	ok = WriteFile(file, contents, bytes, &written, NULL) && written == bytes;
+	return CloseHandle(file) && ok;
+}
+
+/* Runs settings and monitoring tests, or acts as the short-lived child process.
+ * argc: Argument count; more than one selects child mode.
+ * argv: Argument values, unused.
+ */
+int main(int argc, char **argv)
+{
+	wchar_t directory[MAX_PATH], ini[MAX_PATH], child_path[MAX_PATH], executable[32768], contents[65536];
+	AwakeSettings loaded = { 0 };
+	AwakeSettings invalid = { 0 };
+	STARTUPINFOW startup = { 0 };
+	PROCESS_INFORMATION child = { 0 };
+	wchar_t command[] = L"child.exe child";
+	HANDLE file;
+	HWND top_window, child_window;
+	DWORD length, bytes;
+
+	(void)argv;
+	if (argc > 1) {
+		/* An argument selects the short-lived child process used by the monitor test. */
+		Sleep(3000);
+		return 0;
+	}
+	window_proc(NULL, WM_TRAY, ID_TRAY, WM_LBUTTONUP);
+	window_proc(NULL, WM_TRAY, ID_TRAY + 1, WM_LBUTTONDBLCLK);
+	CHECK(launch_count == 0 && monitor_errors == 0);
+	window_proc(NULL, WM_TRAY, ID_TRAY, WM_LBUTTONDBLCLK);
+	CHECK(launch_count == 1 && monitor_errors == 0);
+	CHECK(wcscmp(launched_path, L"C:\\Program Files\\AutoAwake\\Settings.exe") == 0);
+	launch_failure = TRUE;
+	window_proc(NULL, WM_TRAY, ID_TRAY, WM_LBUTTONDBLCLK);
+	CHECK(launch_count == 2 && monitor_errors == 1);
+	launch_failure = FALSE;
+	module_path_failure = TRUE;
+	window_proc(NULL, WM_TRAY, ID_TRAY, WM_LBUTTONDBLCLK);
+	CHECK(launch_count == 2 && monitor_errors == 2);
+	module_path_failure = FALSE;
+	module_path = L"autoawake.exe";
+	window_proc(NULL, WM_TRAY, ID_TRAY, WM_LBUTTONDBLCLK);
+	CHECK(launch_count == 2 && monitor_errors == 3);
+	monitor_errors = 0;
+	module_path = L"C:\\Program Files\\AutoAwake\\autoawake.exe";
+	CHECK(WinMain(NULL, NULL, NULL, 0) == 0);
+	CHECK(launch_count == 3 && monitor_errors == 0);
+	CHECK(wcscmp(launched_path, L"C:\\Program Files\\AutoAwake\\Settings.exe") == 0);
+	launch_failure = TRUE;
+	CHECK(WinMain(NULL, NULL, NULL, 0) == 1);
+	CHECK(launch_count == 4 && monitor_errors == 1);
+	launch_failure = FALSE;
+	mutex_failure = TRUE;
+	CHECK(WinMain(NULL, NULL, NULL, 0) == 1);
+	CHECK(launch_count == 4 && monitor_errors == 2);
+	mutex_failure = FALSE;
+	monitor_errors = 0;
+	CHECK(GetTempPathW(ARRAYSIZE(directory), directory) != 0);
+	CHECK(GetTempFileNameW(directory, L"awk", 0, ini) != 0);
+	CHECK(DeleteFileW(ini));
+	CHECK(settings_load_file(ini, &loaded) == SETTINGS_OK);
+	CHECK(loaded.interval_seconds == 30 && loaded.cpu_usage_enabled && loaded.cpu_usage_threshold == 80);
+	CHECK(loaded.cpu_usage_action == CPU_USAGE_KEEP_SYSTEM_AWAKE && loaded.application_count == 0);
+	settings_free(&loaded);
+	file = CreateFileW(ini, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	CHECK(file != INVALID_HANDLE_VALUE);
+	CHECK(ReadFile(file, contents, sizeof(contents) - sizeof(wchar_t), &bytes, NULL));
+	CHECK(CloseHandle(file));
+	CHECK(bytes % sizeof(wchar_t) == 0);
+	contents[bytes / sizeof(wchar_t)] = L'\0';
+	CHECK(wcscmp(contents, L"\xFEFF[General]\r\nInterval=30\r\nCpuUsageEnabled=1\r\nCpuUsageThreshold=80\r\nCpuUsageAction=NoSleep\r\n") == 0);
+	length = GetModuleFileNameW(NULL, executable, ARRAYSIZE(executable));
+	CHECK(length > 0 && length < ARRAYSIZE(executable));
+	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents),
+		L"\xFEFF[General]\r\nCpuUsageEnabled=0\r\n[First]\r\nPath=%s\r\nAction=keepdisplay\r\nVisibleWindowOnly=1\r\n[Second]\r\nPath=%s\r\nAction=NoSleep\r\n", executable, executable)));
+	CHECK(write_settings(ini, contents));
+	CHECK(settings_load_file(ini, &loaded) == SETTINGS_OK);
+	CHECK(!loaded.cpu_usage_enabled && loaded.application_count == 2);
+	CHECK(loaded.applications[0].action == APPLICATION_KEEP_DISPLAY_AWAKE && loaded.applications[0].visible_window_only);
+	CHECK(loaded.applications[1].action == APPLICATION_KEEP_SYSTEM_AWAKE && !loaded.applications[1].visible_window_only);
+	CHECK(CompareStringOrdinal(loaded.applications[0].path, -1, executable, -1, TRUE) == CSTR_EQUAL);
+
+	settings = loaded;
+	top_window = CreateWindowExW(0, L"STATIC", L"Awake test", WS_OVERLAPPEDWINDOW,
+		0, 0, 100, 100, NULL, NULL, GetModuleHandleW(NULL), NULL);
+	CHECK(top_window != NULL);
+	child_window = CreateWindowExW(0, L"STATIC", L"child", WS_CHILD | WS_VISIBLE,
+		0, 0, 10, 10, top_window, NULL, GetModuleHandleW(NULL), NULL);
+	CHECK(child_window != NULL);
+	CHECK(scan_applications(NULL));
+	CHECK(application_no_sleep && !application_keep_display);
+	ShowWindow(top_window, SW_SHOWNOACTIVATE);
+	CHECK(IsWindowVisible(top_window));
+	CHECK(scan_applications(NULL));
+	CHECK(application_no_sleep && application_keep_display);
+	CHECK((last_flags & (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)) == ES_SYSTEM_REQUIRED);
+	ShowWindow(top_window, SW_MINIMIZE);
+	CHECK(IsWindowVisible(top_window));
+	CHECK(scan_applications(NULL) && application_keep_display);
+	ShowWindow(top_window, SW_HIDE);
+	CHECK(scan_applications(NULL) && !application_keep_display && application_no_sleep);
+	settings.applications[1].visible_window_only = TRUE;
+	CHECK(scan_applications(NULL) && !active);
+	ShowWindow(top_window, SW_SHOWNOACTIVATE);
+	settings.applications[1].action = APPLICATION_KEEP_DISPLAY_AWAKE;
+	CHECK(scan_applications(NULL));
+	CHECK(!application_no_sleep && application_keep_display);
+	CHECK((last_flags & (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)) == (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED));
+	settings.cpu_usage_enabled = TRUE;
+	settings.cpu_usage_threshold = 80;
+	settings.cpu_usage_action = CPU_USAGE_KEEP_SYSTEM_AWAKE;
+	have_sample = TRUE;
+	last_cpu_usage = 80;
+	CHECK(update_prevention(NULL));
+	CHECK((last_flags & (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)) == ES_SYSTEM_REQUIRED);
+	last_cpu_usage = 79;
+	CHECK(update_prevention(NULL));
+	CHECK((last_flags & ES_DISPLAY_REQUIRED) != 0);
+	CHECK(DestroyWindow(top_window));
+	CHECK(scan_applications(NULL) && !active);
+	settings_free(&settings);
+	CHECK(scan_applications(NULL));
+	CHECK((last_flags & (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)) == 0);
+	CHECK(!active && monitor_errors == 0);
+
+	CHECK(GetTempFileNameW(directory, L"awp", 0, child_path) != 0);
+	CHECK(CopyFileW(executable, child_path, FALSE));
+	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents),
+		L"\xFEFF[General]\r\nCpuUsageEnabled=0\r\n[Child]\r\nPath=%s\r\nAction=KeepDisplay\r\nVisibleWindowOnly=1\r\n", child_path)));
+	CHECK(write_settings(ini, contents));
+	CHECK(settings_load_file(ini, &settings) == SETTINGS_OK);
+	CHECK(scan_applications(NULL) && !active);
+	top_window = CreateWindowExW(0, L"STATIC", L"Awake test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		0, 0, 100, 100, NULL, NULL, GetModuleHandleW(NULL), NULL);
+	CHECK(top_window != NULL && IsWindowVisible(top_window));
+	startup.cb = sizeof(startup);
+	CHECK(CreateProcessW(child_path, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &startup, &child));
+	CHECK(scan_applications(NULL) && !active);
+	settings.applications[0].visible_window_only = FALSE;
+	CHECK(scan_applications(NULL) && active && application_keep_display);
+	CHECK(DestroyWindow(top_window));
+	CHECK(WaitForSingleObject(child.hProcess, 10000) == WAIT_OBJECT_0);
+	CloseHandle(child.hThread);
+	CloseHandle(child.hProcess);
+	CHECK(scan_applications(NULL) && !active);
+	CHECK(write_settings(ini, L"\xFEFF[General]\r\n[Bad]\r\nPath=relative.exe\r\nAction=NoSleep\r\n"));
+	CHECK(settings_load_file(ini, &settings) == SETTINGS_INVALID_APPLICATION_PATH);
+	CHECK(settings.application_count == 1 && CompareStringOrdinal(settings.applications[0].path, -1, child_path, -1, TRUE) == CSTR_EQUAL);
+	settings_free(&settings);
+	CHECK(DeleteFileW(child_path));
+
+	CHECK(write_settings(ini, L"\xFEFF[General]\r\n[Bad]\r\nPath=relative.exe\r\nAction=NoSleep\r\n"));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_INVALID_APPLICATION_PATH);
+	CHECK(invalid.applications == NULL && invalid.application_count == 0);
+	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents), L"\xFEFF[General]\r\n[Bad]\r\nPath=%s\r\nAction=unknown\r\n", executable)));
+	CHECK(write_settings(ini, contents));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_INVALID_APPLICATION_ACTION);
+	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents), L"\xFEFF[General]\r\n[Bad]\r\nPath=%s\r\nAction=NoSleep\r\nVisibleWindowOnly=2\r\n", executable)));
+	CHECK(write_settings(ini, contents));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_INVALID_APPLICATION_VISIBLE_WINDOW);
+	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents), L"\xFEFF[General]\r\n[Bad]\r\nPath=%s\r\nAction=NoSleep\r\nVisibleWindowOnly=\r\n", executable)));
+	CHECK(write_settings(ini, contents));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_INVALID_APPLICATION_VISIBLE_WINDOW);
+	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents), L"\xFEFF[General]\r\n[App]\r\nPath=%s\r\nAction=NoSleep\r\nVisibleWindowOnly=0\r\n", executable)));
+	CHECK(write_settings(ini, contents));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_OK);
+	CHECK(invalid.application_count == 1 && !invalid.applications[0].visible_window_only);
+	settings_free(&invalid);
+	CHECK(write_settings(ini, L"\xFEFF[General]\r\nCpuUsageEnabled=0\r\n[Settings]\r\nWindowX=-100\r\nWindowY=50\r\nWindowWidth=800\r\nWindowHeight=600\r\n"));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_OK);
+	CHECK(invalid.application_count == 0 && !invalid.cpu_usage_enabled);
+	settings_free(&invalid);
+	CHECK(write_settings(ini, L"\xFEFF[General]\r\nEnabled=0\r\n"));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_OK);
+	CHECK(invalid.cpu_usage_enabled);
+	settings_free(&invalid);
+	CHECK(settings_directory(contents, ARRAYSIZE(contents)));
+	CHECK(wcslen(contents) >= wcslen(L"\\AutoAwake"));
+	CHECK(wcscmp(contents + wcslen(contents) - wcslen(L"\\AutoAwake"), L"\\AutoAwake") == 0);
+	CHECK(DeleteFileW(ini));
+	puts("settings and monitor tests passed");
+	return 0;
+}

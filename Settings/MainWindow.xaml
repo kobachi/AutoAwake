@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Window
+    x:Class="Kobachi.AutoAwake.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Kobachi.AutoAwake"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid x:Name="ContentRoot">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TitleBar x:Uid="AppTitleBar" x:Name="AppTitleBar">
+            <TitleBar.IconSource>
+                <ImageIconSource ImageSource="AppIcon.ico" />
+            </TitleBar.IconSource>
+        </TitleBar>
+
+        <NavigationView x:Name="Navigation" Grid.Row="1"
+                        IsSettingsVisible="False" IsBackButtonVisible="Collapsed"
+                        SelectionChanged="Navigation_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Uid="GeneralNavigation" x:Name="GeneralNavigation" Icon="Setting" />
+                <NavigationViewItem x:Uid="CpuNavigation" x:Name="CpuNavigation" Icon="ReportHacked" />
+                <NavigationViewItem x:Uid="ApplicationsNavigation" x:Name="ApplicationsNavigation" Icon="AllApps" />
+            </NavigationView.MenuItems>
+            <Grid Padding="24">
+                <StackPanel x:Name="GeneralContent" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top" Visibility="Collapsed">
+                    <TextBlock x:Uid="IntervalLabel" VerticalAlignment="Center" />
+                    <NumberBox x:Uid="IntervalInput" x:Name="IntervalInput"
+                               Width="140" Minimum="1" Maximum="86400" SmallChange="1"
+                               SpinButtonPlacementMode="Inline"
+                               Value="{x:Bind Settings.Interval, Mode=OneWay}"
+                               ValueChanged="IntervalInput_ValueChanged" />
+                    <TextBlock x:Uid="IntervalUnit" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel x:Name="CpuContent" Spacing="20" VerticalAlignment="Top" Visibility="Collapsed">
+                    <CheckBox x:Uid="CpuEnabled" x:Name="CpuEnabled"
+                              IsChecked="{x:Bind Settings.CpuUsageEnabled, Mode=TwoWay}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Uid="CpuThresholdLabel" VerticalAlignment="Center" />
+                        <Slider x:Uid="CpuThresholdSlider" x:Name="CpuThresholdSlider"
+                                Width="200" Minimum="0" Maximum="100" StepFrequency="1"
+                                IsEnabled="{x:Bind Settings.CpuUsageEnabled, Mode=OneWay}"
+                                Value="{x:Bind Settings.CpuUsageThreshold, Mode=OneWay}"
+                                ValueChanged="CpuThresholdSlider_ValueChanged" />
+                        <NumberBox x:Uid="CpuThresholdInput" x:Name="CpuThresholdInput"
+                                   Width="110" Minimum="0" Maximum="100" SmallChange="1"
+                                   SpinButtonPlacementMode="Inline"
+                                   IsEnabled="{x:Bind Settings.CpuUsageEnabled, Mode=OneWay}"
+                                   Value="{x:Bind Settings.CpuUsageThreshold, Mode=OneWay}"
+                                   ValueChanged="CpuThresholdInput_ValueChanged" />
+                        <TextBlock Text="%" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Uid="CpuActionLabel" VerticalAlignment="Center" />
+                        <ComboBox x:Uid="CpuAction" x:Name="CpuAction" MinWidth="200"
+                                  IsEnabled="{x:Bind Settings.CpuUsageEnabled, Mode=OneWay}"
+                                  SelectedIndex="{x:Bind ActionIndex(Settings.CpuUsageAction), Mode=OneWay}"
+                                  SelectionChanged="CpuAction_SelectionChanged">
+                            <ComboBoxItem x:Uid="ActionNoSleep" />
+                            <ComboBoxItem x:Uid="ActionKeepDisplay" />
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+                <Grid x:Name="ApplicationsContent" Visibility="Collapsed" RowSpacing="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button x:Uid="AddApplicationButton" x:Name="AddApplication" HorizontalAlignment="Right" Click="AddApplication_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="Add" />
+                            <TextBlock x:Uid="AddApplication" />
+                        </StackPanel>
+                    </Button>
+                    <ListView x:Name="ApplicationList" Grid.Row="1" SelectionMode="None"
+                              HorizontalContentAlignment="Stretch" AllowDrop="True"
+                              DragOver="ApplicationList_DragOver" Drop="ApplicationList_Drop"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ItemsSource="{x:Bind Settings.Applications, Mode=OneWay}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="local:ApplicationSettings">
+                                <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" MaxWidth="180" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="220" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{x:Bind SectionName, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind SectionName, Mode=OneWay}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{x:Bind Path, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Path, Mode=OneWay}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <ComboBox x:Uid="ApplicationAction" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                                              SelectedIndex="{x:Bind ActionIndex, Mode=TwoWay}">
+                                        <ComboBoxItem x:Uid="ActionNoSleep" />
+                                        <ComboBoxItem x:Uid="ActionKeepDisplay" />
+                                    </ComboBox>
+                                    <Button x:Uid="DeleteApplicationButton" Grid.Column="3" VerticalAlignment="Center" Click="DeleteApplication_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <SymbolIcon Symbol="Delete" />
+                                            <TextBlock x:Uid="DeleteApplication" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </Grid>
+        </NavigationView>
+    </Grid>
+</Window>
