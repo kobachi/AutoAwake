@@ -30,6 +30,7 @@
   <data name="AddApplicationButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>アプリを追加</value></data>
   <data name="DeleteApplicationButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>削除</value></data>
   <data name="ApplicationAction.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>アプリのスリープ防止モード</value></data>
+  <data name="ApplicationVisibleWindowOnly.Text" xml:space="preserve"><value>ウィンドウが表示されている場合のみ</value></data>
   <data name="ApplicationErrorTitle" xml:space="preserve"><value>アプリを追加できません</value></data>
   <data name="DuplicateApplication" xml:space="preserve"><value>このパスのアプリは既に追加されています。</value></data>
   <data name="ApplicationPickerError" xml:space="preserve"><value>実行ファイルを追加できませんでした。</value></data>

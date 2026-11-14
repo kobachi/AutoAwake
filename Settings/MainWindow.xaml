@@ -88,22 +88,28 @@
                               ItemsSource="{x:Bind Settings.Applications, Mode=OneWay}">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="local:ApplicationSettings">
-                                <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                                <Grid ColumnSpacing="12" VerticalAlignment="Center"
+                                      BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" MaxWidth="180" />
                                         <ColumnDefinition Width="2*" />
-                                        <ColumnDefinition Width="220" />
+                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="{x:Bind SectionName, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind SectionName, Mode=OneWay}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1" Text="{x:Bind Path, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Path, Mode=OneWay}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <ComboBox x:Uid="ApplicationAction" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                                              SelectedIndex="{x:Bind ActionIndex, Mode=TwoWay}">
-                                        <ComboBoxItem x:Uid="ActionNoSleep" />
-                                        <ComboBoxItem x:Uid="ActionKeepDisplay" />
-                                    </ComboBox>
+                                    <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center">
+                                        <ComboBox x:Uid="ApplicationAction" MinWidth="220" HorizontalAlignment="Stretch"
+                                                  SelectedIndex="{x:Bind ActionIndex, Mode=TwoWay}">
+                                            <ComboBoxItem x:Uid="ActionNoSleep" />
+                                            <ComboBoxItem x:Uid="ActionKeepDisplay" />
+                                        </ComboBox>
+                                        <CheckBox IsChecked="{x:Bind VisibleWindowOnly, Mode=TwoWay}">
+                                            <TextBlock x:Uid="ApplicationVisibleWindowOnly" TextWrapping="NoWrap" />
+                                        </CheckBox>
+                                    </StackPanel>
                                     <Button x:Uid="DeleteApplicationButton" Grid.Column="3" VerticalAlignment="Center" Click="DeleteApplication_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <SymbolIcon Symbol="Delete" />

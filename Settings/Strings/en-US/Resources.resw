@@ -30,6 +30,7 @@
   <data name="AddApplicationButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Add app</value></data>
   <data name="DeleteApplicationButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Delete</value></data>
   <data name="ApplicationAction.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>App sleep prevention mode</value></data>
+  <data name="ApplicationVisibleWindowOnly.Text" xml:space="preserve"><value>Only when a window is visible</value></data>
   <data name="ApplicationErrorTitle" xml:space="preserve"><value>Could not add app</value></data>
   <data name="DuplicateApplication" xml:space="preserve"><value>An app with this path has already been added.</value></data>
   <data name="ApplicationPickerError" xml:space="preserve"><value>Could not add the executable file.</value></data>
