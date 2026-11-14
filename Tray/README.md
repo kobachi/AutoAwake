@@ -15,7 +15,19 @@ CpuUsageAction=NoSleep
 - `Interval`: sampling interval in whole seconds from `1` to `86400`; default `30`.
 - `CpuUsageEnabled`: enable (`1`) or disable (`0`) the CPU-based feature; default `1`.
 - `CpuUsageThreshold`: CPU usage threshold in whole percent from `0` to `100`; default `80`.
-- `CpuUsageAction`: `NoSleep` prevents system sleep while allowing the display to turn off; `KeepDisplay` prevents both system sleep and display idle-off. Default `NoSleep`; values are case-insensitive.
+- `CpuUsageAction`: action to apply while the CPU condition matches; default `NoSleep`. Values are case-insensitive.
+
+## Actions
+
+The table describes idle behavior: ○ means allowed and ✗ means prevented. Allowed means AutoAwake does not request suppression; Windows settings and policies still apply.
+
+| Action | System sleep | Display idle-off | Screen saver | Idle automatic lock |
+|---|:---:|:---:|:---:|:---:|
+| `NoSleep` | ✗ | ○ | ○ | ○ |
+| `KeepDisplay` | ✗ | ✗ | ○ | ○ |
+| `KeepUnlocked` | ✗ | ✗ | ✗ | ✗ |
+
+`KeepUnlocked` requests suppression of idle screen savers and idle automatic locking. Policy and power state may affect the request; it does not prevent explicit sleep or locking.
 
 ## Settings window
 
@@ -48,14 +60,14 @@ VisibleWindowOnly=1
 ```
 
 - `Path`: the absolute Windows path to the application's executable. Paths are compared case-insensitively with the process image path; use the actual image path rather than a shortcut, symbolic link, or alternate path spelling.
-- `Action`: required; the sleep prevention mode while the application is running. `NoSleep` prevents system sleep; `KeepDisplay` prevents system sleep and display idle-off, as with `CpuUsageAction`. Values are case-insensitive.
+- `Action`: required; the sleep prevention mode while the application is running, as described in Actions. Values are case-insensitive.
 - `VisibleWindowOnly`: `1` requires a matching process to have a visible top-level window; `0` matches the running process regardless of its windows. The default is `0`.
 
 A window is visible when Windows reports it as visible (`IsWindowVisible`). A minimized window or one obscured by other windows can still count as visible. Only top-level windows on AutoAwake's current desktop are enumerated; a window belonging to a different process does not satisfy the condition.
 
 AutoAwake checks running processes and window visibility at startup, after settings changes and system resume, and every five seconds while application sections exist. A process and, when required, its visible window must remain present until a check to be detected. If a process with a configured executable name cannot be inspected or window enumeration fails, AutoAwake reports the error and exits instead of silently ignoring it.
 
-When multiple application or CPU conditions match, the priority is `KeepDisplay < NoSleep`: any matching `NoSleep` condition wins, so the display may turn off even if another condition requests `KeepDisplay`. When none match, the sleep prevention request is cleared. The tray icon reflects whether any condition is active.
+When multiple application or CPU conditions match, the priority is `KeepUnlocked < KeepDisplay < NoSleep`: the less restrictive matching action wins. For example, `NoSleep` allows display idle-off even when another condition requests `KeepDisplay` or `KeepUnlocked`. When none match, the sleep prevention request is cleared. The tray icon reflects whether any condition is active.
 
 ## CPU monitoring
 

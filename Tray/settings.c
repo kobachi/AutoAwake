@@ -74,6 +74,8 @@ static SettingsResult load_applications(const wchar_t *file, DWORD section_capac
 			entry.action = APPLICATION_KEEP_SYSTEM_AWAKE;
 		} else if (lstrcmpiW(action, L"KeepDisplay") == 0) {
 			entry.action = APPLICATION_KEEP_DISPLAY_AWAKE;
+		} else if (lstrcmpiW(action, L"KeepUnlocked") == 0) {
+			entry.action = APPLICATION_KEEP_UNLOCKED;
 		} else {
 			result = SETTINGS_INVALID_APPLICATION_ACTION;
 			goto done;
@@ -232,6 +234,8 @@ static SettingsResult load_file(const wchar_t *path, AwakeSettings *settings, BO
 		loaded.cpu_usage_action = CPU_USAGE_KEEP_SYSTEM_AWAKE;
 	} else if (lstrcmpiW(action_value, L"KeepDisplay") == 0) {
 		loaded.cpu_usage_action = CPU_USAGE_KEEP_DISPLAY_AWAKE;
+	} else if (lstrcmpiW(action_value, L"KeepUnlocked") == 0) {
+		loaded.cpu_usage_action = CPU_USAGE_KEEP_UNLOCKED;
 	} else {
 		/* The CPU action does not name a supported mode. */
 		return SETTINGS_INVALID_CPU_ACTION;

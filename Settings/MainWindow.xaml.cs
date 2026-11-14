@@ -176,12 +176,18 @@ namespace Kobachi.AutoAwake {
 			Settings.CpuUsageThreshold = (int)value;
 		}
 
-		private int ActionIndex(SleepPreventionAction action) => action == SleepPreventionAction.NoSleep ? 0 : 1;
+		private int ActionIndex(SleepPreventionAction action) => action switch {
+			SleepPreventionAction.NoSleep => 0,
+			SleepPreventionAction.KeepDisplay => 1,
+			SleepPreventionAction.KeepUnlocked => 2,
+			_ => throw new InvalidOperationException("Invalid sleep prevention action.")
+		};
 
 		private void CpuAction_SelectionChanged(object sender, SelectionChangedEventArgs args) {
 			if (!initialized) return;
 			if (CpuAction.SelectedIndex == 0) Settings.CpuUsageAction = SleepPreventionAction.NoSleep;
 			else if (CpuAction.SelectedIndex == 1) Settings.CpuUsageAction = SleepPreventionAction.KeepDisplay;
+			else if (CpuAction.SelectedIndex == 2) Settings.CpuUsageAction = SleepPreventionAction.KeepUnlocked;
 		}
 
 		private void IntervalInput_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args) {

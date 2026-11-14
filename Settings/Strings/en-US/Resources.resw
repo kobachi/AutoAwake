@@ -25,6 +25,7 @@
   <data name="CpuAction.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>CPU monitoring action</value></data>
   <data name="ActionNoSleep.Content" xml:space="preserve"><value>Prevent sleep</value></data>
   <data name="ActionKeepDisplay.Content" xml:space="preserve"><value>Prevent sleep and display off</value></data>
+  <data name="ActionKeepUnlocked.Content" xml:space="preserve"><value>Prevent screen saver and idle lock</value></data>
   <data name="AddApplication.Text" xml:space="preserve"><value>Add app</value></data>
   <data name="DeleteApplication.Text" xml:space="preserve"><value>Delete</value></data>
   <data name="AddApplicationButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Add app</value></data>

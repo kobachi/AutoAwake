@@ -67,6 +67,7 @@
                                   SelectionChanged="CpuAction_SelectionChanged">
                             <ComboBoxItem x:Uid="ActionNoSleep" />
                             <ComboBoxItem x:Uid="ActionKeepDisplay" />
+                            <ComboBoxItem x:Uid="ActionKeepUnlocked" />
                         </ComboBox>
                     </StackPanel>
                 </StackPanel>
@@ -105,6 +106,7 @@
                                                   SelectedIndex="{x:Bind ActionIndex, Mode=TwoWay}">
                                             <ComboBoxItem x:Uid="ActionNoSleep" />
                                             <ComboBoxItem x:Uid="ActionKeepDisplay" />
+                                            <ComboBoxItem x:Uid="ActionKeepUnlocked" />
                                         </ComboBox>
                                         <CheckBox IsChecked="{x:Bind VisibleWindowOnly, Mode=TwoWay}">
                                             <TextBlock x:Uid="ApplicationVisibleWindowOnly" TextWrapping="NoWrap" />

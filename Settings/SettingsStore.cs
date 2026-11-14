@@ -116,7 +116,8 @@ namespace Kobachi.AutoAwake {
 		private static SleepPreventionAction ParseAction(string value, string name) {
 			if (string.Equals(value, "NoSleep", StringComparison.OrdinalIgnoreCase)) return SleepPreventionAction.NoSleep;
 			if (string.Equals(value, "KeepDisplay", StringComparison.OrdinalIgnoreCase)) return SleepPreventionAction.KeepDisplay;
-			throw new FormatException(name + " must be NoSleep or KeepDisplay.");
+			if (string.Equals(value, "KeepUnlocked", StringComparison.OrdinalIgnoreCase)) return SleepPreventionAction.KeepUnlocked;
+			throw new FormatException(name + " must be NoSleep, KeepDisplay or KeepUnlocked.");
 		}
 
 		private static void Validate(AwakeSettings settings) {
@@ -141,7 +142,8 @@ namespace Kobachi.AutoAwake {
 		}
 
 		private static void ValidateAction(SleepPreventionAction action) {
-			if (action != SleepPreventionAction.NoSleep && action != SleepPreventionAction.KeepDisplay) throw new FormatException("Invalid sleep prevention action.");
+			if (action != SleepPreventionAction.NoSleep && action != SleepPreventionAction.KeepDisplay && action != SleepPreventionAction.KeepUnlocked)
+				throw new FormatException("Invalid sleep prevention action.");
 		}
 
 		private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e) {

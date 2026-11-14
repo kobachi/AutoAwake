@@ -25,6 +25,7 @@
   <data name="CpuAction.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>CPU監視時の動作</value></data>
   <data name="ActionNoSleep.Content" xml:space="preserve"><value>スリープ防止</value></data>
   <data name="ActionKeepDisplay.Content" xml:space="preserve"><value>スリープと画面オフを防止</value></data>
+  <data name="ActionKeepUnlocked.Content" xml:space="preserve"><value>スクリーンセーバーと自動ロックを防止</value></data>
   <data name="AddApplication.Text" xml:space="preserve"><value>アプリを追加</value></data>
   <data name="DeleteApplication.Text" xml:space="preserve"><value>削除</value></data>
   <data name="AddApplicationButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>アプリを追加</value></data>

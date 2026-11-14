@@ -5,12 +5,14 @@
 
 typedef enum CpuUsageAction {
 	CPU_USAGE_KEEP_SYSTEM_AWAKE,
-	CPU_USAGE_KEEP_DISPLAY_AWAKE
+	CPU_USAGE_KEEP_DISPLAY_AWAKE,
+	CPU_USAGE_KEEP_UNLOCKED
 } CpuUsageAction;
 
 typedef enum ApplicationAction {
 	APPLICATION_KEEP_SYSTEM_AWAKE,
-	APPLICATION_KEEP_DISPLAY_AWAKE
+	APPLICATION_KEEP_DISPLAY_AWAKE,
+	APPLICATION_KEEP_UNLOCKED
 } ApplicationAction;
 
 /* Defines the matching conditions and sleep prevention mode for one application. */

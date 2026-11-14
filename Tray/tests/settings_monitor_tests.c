@@ -13,6 +13,28 @@ static BOOL launch_failure;
 static int launch_count;
 static wchar_t launched_path[32768];
 static BOOL mutex_failure;
+static int power_creates, power_sets, power_clears;
+static BOOL power_create_failure, power_set_failure, power_clear_failure;
+
+static HANDLE WINAPI test_power_create(PREASON_CONTEXT reason)
+{
+	++power_creates;
+	if (power_create_failure || reason->Version != POWER_REQUEST_CONTEXT_VERSION ||
+		reason->Flags != POWER_REQUEST_CONTEXT_SIMPLE_STRING) return INVALID_HANDLE_VALUE;
+	return CreateEventW(NULL, FALSE, FALSE, NULL);
+}
+
+static BOOL WINAPI test_power_set(HANDLE request, POWER_REQUEST_TYPE type)
+{
+	++power_sets;
+	return request != NULL && type == PowerRequestDisplayRequired && !power_set_failure;
+}
+
+static BOOL WINAPI test_power_clear(HANDLE request, POWER_REQUEST_TYPE type)
+{
+	++power_clears;
+	return request != NULL && type == PowerRequestDisplayRequired && !power_clear_failure;
+}
 
 static HANDLE WINAPI test_create_mutex(LPSECURITY_ATTRIBUTES attributes, BOOL owner, LPCWSTR name)
 {
@@ -94,6 +116,9 @@ static int WINAPI test_message_box(HWND window, LPCWSTR message, LPCWSTR title, 
 }
 
 #define SetThreadExecutionState test_execution_state
+#define PowerCreateRequest test_power_create
+#define PowerSetRequest test_power_set
+#define PowerClearRequest test_power_clear
 #define Shell_NotifyIconW test_notify_icon
 #define MessageBoxW test_message_box
 #define GetModuleFileNameW test_module_filename
@@ -104,6 +129,9 @@ static int WINAPI test_message_box(HWND window, LPCWSTR message, LPCWSTR title, 
 #undef CreateMutexW
 #undef LoadStringW
 #undef SetThreadExecutionState
+#undef PowerCreateRequest
+#undef PowerSetRequest
+#undef PowerClearRequest
 #undef Shell_NotifyIconW
 #undef MessageBoxW
 #undef GetModuleFileNameW
@@ -197,6 +225,13 @@ int main(int argc, char **argv)
 	length = GetModuleFileNameW(NULL, executable, ARRAYSIZE(executable));
 	CHECK(length > 0 && length < ARRAYSIZE(executable));
 	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents),
+		L"\xFEFF[General]\r\nCpuUsageAction=keepunlocked\r\n[App]\r\nPath=%s\r\nAction=KEEPUNLOCKED\r\n", executable)));
+	CHECK(write_settings(ini, contents));
+	CHECK(settings_load_file(ini, &loaded) == SETTINGS_OK);
+	CHECK(loaded.cpu_usage_action == CPU_USAGE_KEEP_UNLOCKED && loaded.application_count == 1);
+	CHECK(loaded.applications[0].action == APPLICATION_KEEP_UNLOCKED);
+	settings_free(&loaded);
+	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents),
 		L"\xFEFF[General]\r\nCpuUsageEnabled=0\r\n[First]\r\nPath=%s\r\nAction=keepdisplay\r\nVisibleWindowOnly=1\r\n[Second]\r\nPath=%s\r\nAction=NoSleep\r\n", executable, executable)));
 	CHECK(write_settings(ini, contents));
 	CHECK(settings_load_file(ini, &loaded) == SETTINGS_OK);
@@ -231,6 +266,16 @@ int main(int argc, char **argv)
 	CHECK(scan_applications(NULL));
 	CHECK(!application_no_sleep && application_keep_display);
 	CHECK((last_flags & (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)) == (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED));
+	settings.applications[1].action = APPLICATION_KEEP_UNLOCKED;
+	CHECK(scan_applications(NULL) && application_keep_unlocked && application_keep_display && !display_request);
+	settings.applications[0].action = APPLICATION_KEEP_UNLOCKED;
+	CHECK(scan_applications(NULL) && application_keep_unlocked && !application_keep_display && display_request);
+	settings.applications[1].action = APPLICATION_KEEP_SYSTEM_AWAKE;
+	CHECK(scan_applications(NULL) && application_no_sleep && !display_request);
+	settings.applications[0].action = APPLICATION_KEEP_DISPLAY_AWAKE;
+	settings.applications[1].action = APPLICATION_KEEP_DISPLAY_AWAKE;
+	CHECK(scan_applications(NULL) && !application_keep_unlocked && application_keep_display);
+	power_creates = power_sets = power_clears = 0;
 	settings.cpu_usage_enabled = TRUE;
 	settings.cpu_usage_threshold = 80;
 	settings.cpu_usage_action = CPU_USAGE_KEEP_SYSTEM_AWAKE;
@@ -247,6 +292,49 @@ int main(int argc, char **argv)
 	CHECK(scan_applications(NULL));
 	CHECK((last_flags & (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)) == 0);
 	CHECK(!active && monitor_errors == 0);
+
+	settings.cpu_usage_enabled = TRUE;
+	settings.cpu_usage_threshold = 80;
+	settings.cpu_usage_action = CPU_USAGE_KEEP_UNLOCKED;
+	have_sample = TRUE;
+	last_cpu_usage = 80;
+	CHECK(update_prevention(NULL));
+	CHECK(active && display_request && power_creates == 1 && power_sets == 1);
+	CHECK((last_flags & ES_SYSTEM_REQUIRED) != 0);
+	CHECK(update_prevention(NULL) && power_creates == 1 && power_sets == 1);
+	application_keep_display = TRUE;
+	CHECK(update_prevention(NULL));
+	CHECK(!display_request && power_clears == 1 && (last_flags & ES_DISPLAY_REQUIRED));
+	application_keep_display = FALSE;
+	CHECK(update_prevention(NULL) && display_request && power_creates == 2);
+	application_no_sleep = TRUE;
+	CHECK(update_prevention(NULL) && !display_request && power_clears == 2);
+	CHECK((last_flags & (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)) == ES_SYSTEM_REQUIRED);
+	application_no_sleep = FALSE;
+	CHECK(update_prevention(NULL) && display_request && power_creates == 3);
+	window_proc(NULL, WM_POWERBROADCAST, PBT_APMRESUMEAUTOMATIC, 0);
+	CHECK(display_request && power_creates == 4 && power_clears == 2);
+	last_cpu_usage = 79;
+	CHECK(update_prevention(NULL) && !active && !display_request && power_clears == 3);
+	power_create_failure = TRUE;
+	last_cpu_usage = 80;
+	CHECK(!update_prevention(NULL) && !active && !display_request && monitor_errors == 1);
+	CHECK(last_flags == ES_CONTINUOUS);
+	power_create_failure = FALSE;
+	power_set_failure = TRUE;
+	have_sample = TRUE;
+	CHECK(!update_prevention(NULL) && !active && !display_request && monitor_errors == 2);
+	CHECK(last_flags == ES_CONTINUOUS);
+	power_set_failure = FALSE;
+	have_sample = TRUE;
+	CHECK(update_prevention(NULL) && display_request);
+	power_clear_failure = TRUE;
+	last_cpu_usage = 79;
+	CHECK(!update_prevention(NULL) && !active && !display_request && monitor_errors == 3);
+	power_clear_failure = FALSE;
+	monitor_errors = 0;
+	settings.cpu_usage_enabled = FALSE;
+	have_sample = FALSE;
 
 	CHECK(GetTempFileNameW(directory, L"awp", 0, child_path) != 0);
 	CHECK(CopyFileW(executable, child_path, FALSE));

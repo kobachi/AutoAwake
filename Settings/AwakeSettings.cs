@@ -9,7 +9,8 @@ using System.Runtime.CompilerServices;
 namespace Kobachi.AutoAwake {
 	public enum SleepPreventionAction {
 		NoSleep,
-		KeepDisplay
+		KeepDisplay,
+		KeepUnlocked
 	}
 
 	public abstract class BindableObject : INotifyPropertyChanged {
@@ -97,10 +98,16 @@ namespace Kobachi.AutoAwake {
 		}
 
 		public int ActionIndex {
-			get => Action == SleepPreventionAction.NoSleep ? 0 : 1;
+			get => Action switch {
+				SleepPreventionAction.NoSleep => 0,
+				SleepPreventionAction.KeepDisplay => 1,
+				SleepPreventionAction.KeepUnlocked => 2,
+				_ => throw new InvalidOperationException("Invalid sleep prevention action.")
+			};
 			set {
 				if (value == 0) Action = SleepPreventionAction.NoSleep;
 				else if (value == 1) Action = SleepPreventionAction.KeepDisplay;
+				else if (value == 2) Action = SleepPreventionAction.KeepUnlocked;
 			}
 		}
 

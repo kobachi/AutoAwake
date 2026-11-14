@@ -32,8 +32,10 @@ static BOOL have_sample;
 static double last_cpu_usage;
 static BOOL application_no_sleep;
 static BOOL application_keep_display;
+static BOOL application_keep_unlocked;
+static HANDLE display_request;
 static AwakeSettings settings;
-static wchar_t strings[IDS_INSTANCE_ERROR - IDS_TITLE + 1][256];
+static wchar_t strings[IDS_POWER_REASON - IDS_TITLE + 1][256];
 
 /* Loads the localized application strings.
  * instance: Module containing the string resources.
@@ -41,7 +43,7 @@ static wchar_t strings[IDS_INSTANCE_ERROR - IDS_TITLE + 1][256];
 static BOOL load_strings(HINSTANCE instance)
 {
 	UINT id;
-	for (id = IDS_TITLE; id <= IDS_INSTANCE_ERROR; ++id) {
+	for (id = IDS_TITLE; id <= IDS_POWER_REASON; ++id) {
 		int length = LoadStringW(instance, id, strings[id - IDS_TITLE], 256);
 		if (length == 0 || length == 255) {
 			/* A required localized string is missing or may be truncated. */
@@ -108,10 +110,12 @@ static void stop_cpu_monitor(HWND window)
 static void fail_monitor(HWND window, UINT error_id)
 {
 	stop_cpu_monitor(window);
-	if (active) {
-		SetThreadExecutionState(ES_CONTINUOUS);
-		active = FALSE;
+	if (display_request) {
+		CloseHandle(display_request);
+		display_request = NULL;
 	}
+	SetThreadExecutionState(ES_CONTINUOUS);
+	active = FALSE;
 	MessageBoxW(window, text(error_id), text(IDS_TITLE), MB_OK | MB_ICONERROR);
 	DestroyWindow(window);
 	PostQuitMessage(1);
@@ -136,6 +140,30 @@ static BOOL set_prevention(HWND window, BOOL enabled, CpuUsageAction action)
 		/* Windows rejected the sleep prevention request. */
 		fail_monitor(window, IDS_POWER_REQUEST_ERROR);
 		return FALSE;
+	}
+	if (enabled && action == CPU_USAGE_KEEP_UNLOCKED && !display_request) {
+		REASON_CONTEXT reason = { 0 };
+		reason.Version = POWER_REQUEST_CONTEXT_VERSION;
+		reason.Flags = POWER_REQUEST_CONTEXT_SIMPLE_STRING;
+		reason.Reason.SimpleReasonString = strings[IDS_POWER_REASON - IDS_TITLE];
+		display_request = PowerCreateRequest(&reason);
+		if (display_request == INVALID_HANDLE_VALUE) {
+			display_request = NULL;
+			fail_monitor(window, IDS_POWER_REQUEST_ERROR);
+			return FALSE;
+		}
+		if (!PowerSetRequest(display_request, PowerRequestDisplayRequired)) {
+			fail_monitor(window, IDS_POWER_REQUEST_ERROR);
+			return FALSE;
+		}
+	} else if ((!enabled || action != CPU_USAGE_KEEP_UNLOCKED) && display_request) {
+		BOOL cleared = PowerClearRequest(display_request, PowerRequestDisplayRequired);
+		BOOL closed = CloseHandle(display_request);
+		display_request = NULL;
+		if (!cleared || !closed) {
+			fail_monitor(window, IDS_POWER_REQUEST_ERROR);
+			return FALSE;
+		}
 	}
 	if (active == enabled) {
 		/* The active state is unchanged, so the tray icon needs no update. */
@@ -166,8 +194,11 @@ static BOOL update_prevention(HWND window)
 		(cpu_active && settings.cpu_usage_action == CPU_USAGE_KEEP_SYSTEM_AWAKE);
 	BOOL keep_display = application_keep_display ||
 		(cpu_active && settings.cpu_usage_action == CPU_USAGE_KEEP_DISPLAY_AWAKE);
-	return set_prevention(window, no_sleep || keep_display,
-		no_sleep ? CPU_USAGE_KEEP_SYSTEM_AWAKE : CPU_USAGE_KEEP_DISPLAY_AWAKE);
+	BOOL keep_unlocked = application_keep_unlocked ||
+		(cpu_active && settings.cpu_usage_action == CPU_USAGE_KEEP_UNLOCKED);
+	return set_prevention(window, no_sleep || keep_display || keep_unlocked,
+		no_sleep ? CPU_USAGE_KEEP_SYSTEM_AWAKE :
+		keep_display ? CPU_USAGE_KEEP_DISPLAY_AWAKE : CPU_USAGE_KEEP_UNLOCKED);
 }
 
 /* Tracks whether a process has a visible top-level window during enumeration. */
@@ -198,13 +229,14 @@ static BOOL scan_applications(HWND window)
 {
 	HANDLE snapshot;
 	PROCESSENTRY32W process = { 0 };
-	BOOL no_sleep = FALSE, keep_display = FALSE;
+	BOOL no_sleep = FALSE, keep_display = FALSE, keep_unlocked = FALSE;
 	DWORD error;
 
 	if (!settings.application_count) {
 		/* No application rules exist, so only CPU conditions can remain active. */
 		application_no_sleep = FALSE;
 		application_keep_display = FALSE;
+		application_keep_unlocked = FALSE;
 		return update_prevention(window);
 	}
 	snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -276,8 +308,10 @@ static BOOL scan_applications(HWND window)
 						}
 						if (settings.applications[i].action == APPLICATION_KEEP_SYSTEM_AWAKE) {
 							no_sleep = TRUE;
-						} else {
+						} else if (settings.applications[i].action == APPLICATION_KEEP_DISPLAY_AWAKE) {
 							keep_display = TRUE;
+						} else {
+							keep_unlocked = TRUE;
 						}
 					}
 				}
@@ -293,6 +327,7 @@ static BOOL scan_applications(HWND window)
 	}
 	application_no_sleep = no_sleep;
 	application_keep_display = keep_display;
+	application_keep_unlocked = keep_unlocked;
 	return update_prevention(window);
 }
 
@@ -462,6 +497,14 @@ static LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LP
 	switch (message) {
 	case WM_POWERBROADCAST:
 		if (wparam == PBT_APMRESUMEAUTOMATIC) {
+			if (display_request) {
+				BOOL closed = CloseHandle(display_request);
+				display_request = NULL;
+				if (!closed) {
+					fail_monitor(window, IDS_POWER_REQUEST_ERROR);
+					return TRUE;
+				}
+			}
 			if (settings.cpu_usage_enabled && cpu_query) {
 				stop_cpu_monitor(window);
 				if (!start_cpu_monitor(window)) {
@@ -495,6 +538,12 @@ static LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LP
 		stop_cpu_monitor(window);
 		KillTimer(window, ID_APPLICATION_TIMER);
 		settings_free(&settings);
+		if (display_request) {
+			BOOL cleared = PowerClearRequest(display_request, PowerRequestDisplayRequired);
+			BOOL closed = CloseHandle(display_request);
+			display_request = NULL;
+			if (!cleared || !closed) MessageBoxW(NULL, text(IDS_POWER_REQUEST_ERROR), text(IDS_TITLE), MB_OK | MB_ICONERROR);
+		}
 		if (active && !SetThreadExecutionState(ES_CONTINUOUS)) {
 			MessageBoxW(NULL, text(IDS_POWER_REQUEST_ERROR), text(IDS_TITLE), MB_OK | MB_ICONERROR);
 		}
