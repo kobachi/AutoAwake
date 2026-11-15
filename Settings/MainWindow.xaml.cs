@@ -136,6 +136,8 @@ namespace Kobachi.AutoAwake {
 			settingsStore.SaveWindowBounds(position.X, position.Y, size.Width, size.Height);
 		}
 
+		private void AppTitleBar_PaneToggleRequested(TitleBar sender, object args) => Navigation.IsPaneOpen = !Navigation.IsPaneOpen;
+
 		private void Navigation_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
 			if (!initialized) return;
 			GeneralContent.Visibility = sender.SelectedItem == GeneralNavigation ? Visibility.Visible : Visibility.Collapsed;

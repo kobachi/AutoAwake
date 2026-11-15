@@ -18,7 +18,8 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TitleBar x:Uid="AppTitleBar" x:Name="AppTitleBar">
+        <TitleBar x:Uid="AppTitleBar" x:Name="AppTitleBar"
+                  IsPaneToggleButtonVisible="True" PaneToggleRequested="AppTitleBar_PaneToggleRequested">
             <TitleBar.IconSource>
                 <ImageIconSource ImageSource="AppIcon.ico" />
             </TitleBar.IconSource>
@@ -28,7 +29,7 @@
                  Severity="Informational" HorizontalAlignment="Stretch" IsClosable="False" />
 
         <NavigationView x:Name="Navigation" Grid.Row="2"
-                        IsSettingsVisible="False" IsBackButtonVisible="Collapsed"
+                        IsSettingsVisible="False" IsBackButtonVisible="Collapsed" IsPaneToggleButtonVisible="False"
                         SelectionChanged="Navigation_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Uid="GeneralNavigation" x:Name="GeneralNavigation" Icon="Setting" />
