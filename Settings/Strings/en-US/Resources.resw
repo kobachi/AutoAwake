@@ -19,6 +19,7 @@
   <data name="GeneralNavigation.Content" xml:space="preserve"><value>General</value></data>
   <data name="CpuNavigation.Content" xml:space="preserve"><value>CPU usage</value></data>
   <data name="ApplicationsNavigation.Content" xml:space="preserve"><value>Apps</value></data>
+  <data name="AboutNavigation.Content" xml:space="preserve"><value>About</value></data>
   <data name="IntervalLabel.Text" xml:space="preserve"><value>Monitoring frequency</value></data>
   <data name="IntervalUnit.Text" xml:space="preserve"><value>seconds</value></data>
   <data name="IntervalInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Monitoring frequency in seconds</value></data>

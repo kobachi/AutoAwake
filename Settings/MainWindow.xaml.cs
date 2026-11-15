@@ -37,6 +37,9 @@ namespace Kobachi.AutoAwake {
 			settingsStore.SaveFailed += SettingsError.ShowSaveError;
 			InitializeComponent();
 			RefreshStartupState();
+			var about = new AboutInformation(typeof(MainWindow).Assembly);
+			AboutTitle.Text = about.TitleAndVersion;
+			AboutCopyright.Text = about.Copyright;
 			ContentRoot.DataContext = Settings;
 			Navigation.SelectedItem = GeneralNavigation;
 			GeneralContent.Visibility = Visibility.Visible;
@@ -138,6 +141,7 @@ namespace Kobachi.AutoAwake {
 			GeneralContent.Visibility = sender.SelectedItem == GeneralNavigation ? Visibility.Visible : Visibility.Collapsed;
 			CpuContent.Visibility = sender.SelectedItem == CpuNavigation ? Visibility.Visible : Visibility.Collapsed;
 			ApplicationsContent.Visibility = sender.SelectedItem == ApplicationsNavigation ? Visibility.Visible : Visibility.Collapsed;
+			AboutContent.Visibility = ReferenceEquals(sender.SelectedItem, AboutNavigation) ? Visibility.Visible : Visibility.Collapsed;
 		}
 
 		private void RefreshStartupState() {

@@ -35,6 +35,9 @@
                 <NavigationViewItem x:Uid="CpuNavigation" x:Name="CpuNavigation" Icon="ReportHacked" />
                 <NavigationViewItem x:Uid="ApplicationsNavigation" x:Name="ApplicationsNavigation" Icon="AllApps" />
             </NavigationView.MenuItems>
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem x:Uid="AboutNavigation" x:Name="AboutNavigation" Icon="Help" />
+            </NavigationView.FooterMenuItems>
             <Grid Padding="24">
                 <StackPanel x:Name="GeneralContent" Spacing="20" VerticalAlignment="Top" Visibility="Collapsed">
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -151,6 +154,11 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
+                <StackPanel x:Name="AboutContent" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Spacing="8" Visibility="Collapsed">
+                    <TextBlock x:Name="AboutTitle" TextAlignment="Center" TextWrapping="Wrap" />
+                    <TextBlock x:Name="AboutCopyright" TextAlignment="Center" TextWrapping="Wrap" />
+                </StackPanel>
             </Grid>
         </NavigationView>
     </Grid>

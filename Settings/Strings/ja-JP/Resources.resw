@@ -19,6 +19,7 @@
   <data name="GeneralNavigation.Content" xml:space="preserve"><value>全体</value></data>
   <data name="CpuNavigation.Content" xml:space="preserve"><value>CPU使用率</value></data>
   <data name="ApplicationsNavigation.Content" xml:space="preserve"><value>アプリ</value></data>
+  <data name="AboutNavigation.Content" xml:space="preserve"><value>バージョン情報</value></data>
   <data name="IntervalLabel.Text" xml:space="preserve"><value>監視頻度</value></data>
   <data name="IntervalUnit.Text" xml:space="preserve"><value>秒毎</value></data>
   <data name="IntervalInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>監視頻度（秒）</value></data>
