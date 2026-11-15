@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Microsoft.UI;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.System;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -24,7 +26,10 @@ namespace Kobachi.AutoAwake {
 	public sealed partial class MainWindow : Window {
 		private readonly SettingsStore settingsStore;
 		private readonly DispatcherQueueTimer boundsSaveTimer;
+		private readonly ThemeSettings themeSettings;
+		private readonly DispatcherQueue uiQueue;
 		private bool initialized;
+		private bool closed;
 		public AwakeSettings Settings => settingsStore.Settings;
 
 		public MainWindow() {
@@ -39,6 +44,12 @@ namespace Kobachi.AutoAwake {
 			Title = AppTitleBar.Title;
 			ExtendsContentIntoTitleBar = true;
 			SetTitleBar(AppTitleBar);
+			uiQueue = DispatcherQueue.GetForCurrentThread();
+			themeSettings = ThemeSettings.CreateForWindowId(AppWindow.Id);
+			themeSettings.Changed += ThemeSettings_Changed;
+			ContentRoot.ActualThemeChanged += ContentRoot_ActualThemeChanged;
+			AppTitleBar.Loaded += AppTitleBar_Loaded;
+			UpdateTitleBarTheme();
 
 			if (AppWindow.Presenter is OverlappedPresenter presenter) {
 				presenter.PreferredMinimumWidth = SettingsStore.MinimumWindowWidth;
@@ -65,14 +76,49 @@ namespace Kobachi.AutoAwake {
 			boundsSaveTimer.IsRepeating = false;
 			boundsSaveTimer.Tick += (_, _) => SaveWindowBounds();
 			AppWindow.Changed += AppWindow_Changed;
-			Activated += (_, _) => SaveWindowBounds();
+			Activated += (_, _) => {
+				QueueTitleBarThemeUpdate();
+				SaveWindowBounds();
+			};
 			Closed += (_, _) => {
+				closed = true;
+				themeSettings.Changed -= ThemeSettings_Changed;
 				SaveWindowBounds();
 				boundsSaveTimer.Stop();
 				AppWindow.Changed -= AppWindow_Changed;
+				ContentRoot.ActualThemeChanged -= ContentRoot_ActualThemeChanged;
+				AppTitleBar.Loaded -= AppTitleBar_Loaded;
 				settingsStore.Dispose();
 			};
 			AppWindow.SetIcon("AppIcon.ico");
+		}
+
+		private void ContentRoot_ActualThemeChanged(FrameworkElement sender, object args) => QueueTitleBarThemeUpdate();
+
+		private void AppTitleBar_Loaded(object sender, RoutedEventArgs args) => QueueTitleBarThemeUpdate();
+
+		private void ThemeSettings_Changed(ThemeSettings sender, object args) => QueueTitleBarThemeUpdate();
+
+		private void QueueTitleBarThemeUpdate() {
+			if (!uiQueue.TryEnqueue(DispatcherQueuePriority.Low, () => {
+				if (!closed) UpdateTitleBarTheme();
+			})) System.Diagnostics.Debug.WriteLine("Could not schedule the title bar theme update.");
+		}
+
+		private void UpdateTitleBarTheme() {
+			// WinUI can overwrite caption colors during title bar initialization and theme changes.
+			var titleBar = AppWindow.TitleBar;
+			if (themeSettings.HighContrast) {
+				titleBar.PreferredTheme = TitleBarTheme.Legacy;
+				titleBar.ButtonForegroundColor = null;
+				titleBar.ButtonHoverForegroundColor = null;
+			} else {
+				bool dark = ContentRoot.ActualTheme == ElementTheme.Dark;
+				titleBar.PreferredTheme = dark ? TitleBarTheme.Dark : TitleBarTheme.Light;
+				var foreground = dark ? Colors.White : Colors.Black;
+				titleBar.ButtonForegroundColor = foreground;
+				titleBar.ButtonHoverForegroundColor = foreground;
+			}
 		}
 
 		private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args) {

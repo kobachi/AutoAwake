@@ -104,17 +104,31 @@
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1" Text="{x:Bind Path, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Path, Mode=OneWay}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center">
-                                        <ComboBox x:Uid="ApplicationAction" MinWidth="220" HorizontalAlignment="Stretch"
-                                                  SelectedIndex="{x:Bind ActionIndex, Mode=TwoWay}">
-                                            <ComboBoxItem x:Uid="ActionNoSleep" />
-                                            <ComboBoxItem x:Uid="ActionKeepDisplay" />
-                                            <ComboBoxItem x:Uid="ActionKeepUnlocked" />
-                                        </ComboBox>
-                                        <CheckBox IsChecked="{x:Bind VisibleWindowOnly, Mode=TwoWay}">
-                                            <TextBlock x:Uid="ApplicationVisibleWindowOnly" TextWrapping="NoWrap" />
-                                        </CheckBox>
-                                    </StackPanel>
+                                    <Grid Grid.Column="2" VerticalAlignment="Center">
+                                        <!-- Measure every localized action so each row reserves the same Auto width. -->
+                                        <Grid Opacity="0" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw">
+                                            <ComboBox MinWidth="220" IsTabStop="False" SelectedIndex="0">
+                                                <ComboBoxItem x:Uid="ActionNoSleep" />
+                                            </ComboBox>
+                                            <ComboBox MinWidth="220" IsTabStop="False" SelectedIndex="0">
+                                                <ComboBoxItem x:Uid="ActionKeepDisplay" />
+                                            </ComboBox>
+                                            <ComboBox MinWidth="220" IsTabStop="False" SelectedIndex="0">
+                                                <ComboBoxItem x:Uid="ActionKeepUnlocked" />
+                                            </ComboBox>
+                                        </Grid>
+                                        <StackPanel Spacing="4">
+                                            <ComboBox x:Uid="ApplicationAction" MinWidth="220" HorizontalAlignment="Stretch"
+                                                      SelectedIndex="{x:Bind ActionIndex, Mode=TwoWay}">
+                                                <ComboBoxItem x:Uid="ActionNoSleep" />
+                                                <ComboBoxItem x:Uid="ActionKeepDisplay" />
+                                                <ComboBoxItem x:Uid="ActionKeepUnlocked" />
+                                            </ComboBox>
+                                            <CheckBox IsChecked="{x:Bind VisibleWindowOnly, Mode=TwoWay}">
+                                                <TextBlock x:Uid="ApplicationVisibleWindowOnly" TextWrapping="NoWrap" />
+                                            </CheckBox>
+                                        </StackPanel>
+                                    </Grid>
                                     <Button x:Uid="DeleteApplicationButton" Grid.Column="3" VerticalAlignment="Center" Click="DeleteApplication_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <SymbolIcon Symbol="Delete" />
