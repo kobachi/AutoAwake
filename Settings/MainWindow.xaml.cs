@@ -150,7 +150,7 @@ namespace Kobachi.AutoAwake {
 		}
 
 		private static bool IsAutoAwakeRunning() {
-			var processes = Process.GetProcessesByName("autoawake");
+			var processes = Process.GetProcessesByName("AutoAwakeCore");
 			try {
 				return processes.Length > 0;
 			} finally {
@@ -160,7 +160,7 @@ namespace Kobachi.AutoAwake {
 
 		private async void StartAutoAwake_Click(object sender, RoutedEventArgs args) {
 			try {
-				Process.Start(new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "autoawake.exe")) { UseShellExecute = true });
+				Process.Start(new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "AutoAwakeCore.exe")) { UseShellExecute = true });
 				AutoAwakeNotRunningNotice.IsOpen = false;
 			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is InvalidOperationException || e is Win32Exception || e is System.Runtime.InteropServices.COMException) {
 				var resources = new Microsoft.Windows.ApplicationModel.Resources.ResourceLoader();

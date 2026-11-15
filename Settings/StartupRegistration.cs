@@ -18,9 +18,9 @@ namespace Kobachi.AutoAwake {
 		/// <summary>Checks whether the named shortcut file exists in the user's Startup folder.</summary>
 		public static bool IsRegistered() => HasShortcut(StartupDirectory());
 
-		/// <summary>Registers the autoawake.exe located alongside the settings application.</summary>
+		/// <summary>Registers the AutoAwakeCore.exe located alongside the settings application.</summary>
 		/// <remarks>An existing file is not overwritten. File and COM errors are propagated to the caller.</remarks>
-		public static void Register() => Register(StartupDirectory(), Path.Combine(AppContext.BaseDirectory, "autoawake.exe"));
+		public static void Register() => Register(StartupDirectory(), Path.Combine(AppContext.BaseDirectory, "AutoAwakeCore.exe"));
 
 		/// <summary>Creates a shortcut to an existing executable in the specified directory.</summary>
 		/// <param name="directory">Directory in which to create AutoAwake.lnk.</param>

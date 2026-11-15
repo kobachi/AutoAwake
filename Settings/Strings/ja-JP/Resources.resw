@@ -14,7 +14,7 @@
   <data name="AutoAwakeNotRunningNotice.Message" xml:space="preserve"><value>AutoAwakeが常駐していないためこれらの設定は動作していません</value></data>
   <data name="StartAutoAwakeButton.Content" xml:space="preserve"><value>起動</value></data>
   <data name="AutoAwakeStartErrorTitle" xml:space="preserve"><value>AutoAwakeを起動できませんでした</value></data>
-  <data name="AutoAwakeStartErrorMessage" xml:space="preserve"><value>autoawake.exeを起動できません。</value></data>
+  <data name="AutoAwakeStartErrorMessage" xml:space="preserve"><value>AutoAwakeCore.exeを起動できません。</value></data>
   <data name="StartupNotice.Message" xml:space="preserve"><value>AutoAwakeがスタートアップに登録されていません</value></data>
   <data name="StartupHeading.Text" xml:space="preserve"><value>スタートアップ</value></data>
   <data name="RegisterStartup.Content" xml:space="preserve"><value>スタートアップに登録</value></data>

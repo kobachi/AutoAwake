@@ -14,7 +14,7 @@
   <data name="AutoAwakeNotRunningNotice.Message" xml:space="preserve"><value>These settings are not in effect because AutoAwake is not running.</value></data>
   <data name="StartAutoAwakeButton.Content" xml:space="preserve"><value>Start</value></data>
   <data name="AutoAwakeStartErrorTitle" xml:space="preserve"><value>Could not start AutoAwake</value></data>
-  <data name="AutoAwakeStartErrorMessage" xml:space="preserve"><value>Could not start autoawake.exe.</value></data>
+  <data name="AutoAwakeStartErrorMessage" xml:space="preserve"><value>Could not start AutoAwakeCore.exe.</value></data>
   <data name="StartupNotice.Message" xml:space="preserve"><value>AutoAwake is not registered at startup.</value></data>
   <data name="StartupHeading.Text" xml:space="preserve"><value>Startup</value></data>
   <data name="RegisterStartup.Content" xml:space="preserve"><value>Add to startup</value></data>

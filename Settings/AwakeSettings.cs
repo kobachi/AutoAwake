@@ -13,7 +13,7 @@ namespace Kobachi.AutoAwake {
 		KeepUnlocked
 	}
 
-	public abstract class BindableObject : INotifyPropertyChanged {
+	public abstract partial class BindableObject : INotifyPropertyChanged {
 		public event PropertyChangedEventHandler? PropertyChanged;
 
 		protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null) {
@@ -31,7 +31,7 @@ namespace Kobachi.AutoAwake {
 		}
 	}
 
-	public sealed class AwakeSettings : BindableObject {
+	public sealed partial class AwakeSettings : BindableObject {
 		private int interval = 30;
 		private bool suppressWindowsUpdate = true;
 		private bool cpuUsageEnabled = true;
@@ -80,7 +80,7 @@ namespace Kobachi.AutoAwake {
 		}
 	}
 
-	public sealed class ApplicationSettings : BindableObject {
+	public sealed partial class ApplicationSettings : BindableObject {
 		private string sectionName = string.Empty;
 		private string path = string.Empty;
 		private SleepPreventionAction action = SleepPreventionAction.NoSleep;

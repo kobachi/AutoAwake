@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <AssemblyName>AutoAwakeSettings</AssemblyName>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>Kobachi.AutoAwake</RootNamespace>
@@ -19,6 +20,8 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
     <Nullable>enable</Nullable>
     <DefaultLanguage>ja-JP</DefaultLanguage>
   </PropertyGroup>
@@ -40,8 +43,7 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <PublishTrimmed>true</PublishTrimmed>
     <StartupObject>Kobachi.AutoAwake.Program</StartupObject>
     <ApplicationIcon>AppIcon.ico</ApplicationIcon>
     <Company>kobachi</Company>
@@ -51,6 +53,18 @@
     <AssemblyTitle>$(Title)</AssemblyTitle>
     <PackageId>Kobachi.AutoAwake</PackageId>
   </PropertyGroup>
+
+  <Target Name="IncludeCompiledXamlInPublish" AfterTargets="ComputeFilesToPublish">
+    <AssignTargetPath Files="@(GeneratedXamlSrc)" RootFolder="$(XamlGeneratedOutputPath)">
+      <Output TaskParameter="AssignedFiles" ItemName="_PublishedXaml" />
+    </AssignTargetPath>
+    <ItemGroup>
+      <ResolvedFileToPublish Include="@(_PublishedXaml)" Condition="'%(_PublishedXaml.Extension)' == '.xbf'">
+        <RelativePath>%(_PublishedXaml.TargetPath)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">

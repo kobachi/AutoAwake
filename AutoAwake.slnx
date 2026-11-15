@@ -4,7 +4,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Settings (Package)/Settings (Package).wapproj" Type="c7167f0d-bc9f-4e6e-afe1-012c56b48db5">
+  <Project Path="Package/Package.wapproj" Type="c7167f0d-bc9f-4e6e-afe1-012c56b48db5">
     <Deploy />
   </Project>
   <Project Path="Settings/Settings.csproj">
@@ -12,7 +12,9 @@
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="*|x86" Project="x86" />
   </Project>
-  <Project Path="Tray/Tray.vcxproj" Id="21d26205-5eb0-47b6-bc0c-c6ca31ca3cc2">
-    <Platform Solution="*|ARM64" Project="x64" />
+  <Project Path="Core/Core.vcxproj" Id="21d26205-5eb0-47b6-bc0c-c6ca31ca3cc2">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="Win32" />
   </Project>
 </Solution>
