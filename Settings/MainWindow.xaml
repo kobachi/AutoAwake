@@ -15,6 +15,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -25,10 +26,16 @@
             </TitleBar.IconSource>
         </TitleBar>
 
-        <InfoBar x:Uid="StartupNotice" x:Name="StartupNotice" Grid.Row="1"
+        <InfoBar x:Uid="AutoAwakeNotRunningNotice" x:Name="AutoAwakeNotRunningNotice" Grid.Row="1"
+                 Severity="Informational" HorizontalAlignment="Stretch" IsClosable="True">
+            <InfoBar.ActionButton>
+                <Button x:Uid="StartAutoAwakeButton" Click="StartAutoAwake_Click" />
+            </InfoBar.ActionButton>
+        </InfoBar>
+        <InfoBar x:Uid="StartupNotice" x:Name="StartupNotice" Grid.Row="2"
                  Severity="Informational" HorizontalAlignment="Stretch" IsClosable="False" />
 
-        <NavigationView x:Name="Navigation" Grid.Row="2"
+        <NavigationView x:Name="Navigation" Grid.Row="3"
                         IsSettingsVisible="False" IsBackButtonVisible="Collapsed" IsPaneToggleButtonVisible="False"
                         SelectionChanged="Navigation_SelectionChanged">
             <NavigationView.MenuItems>

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -36,6 +38,7 @@ namespace Kobachi.AutoAwake {
 			settingsStore = SettingsStore.OpenDefault();
 			settingsStore.SaveFailed += SettingsError.ShowSaveError;
 			InitializeComponent();
+			AutoAwakeNotRunningNotice.IsOpen = !IsAutoAwakeRunning();
 			RefreshStartupState();
 			var about = new AboutInformation(typeof(MainWindow).Assembly);
 			AboutTitle.Text = about.TitleAndVersion;
@@ -144,6 +147,31 @@ namespace Kobachi.AutoAwake {
 			CpuContent.Visibility = sender.SelectedItem == CpuNavigation ? Visibility.Visible : Visibility.Collapsed;
 			ApplicationsContent.Visibility = sender.SelectedItem == ApplicationsNavigation ? Visibility.Visible : Visibility.Collapsed;
 			AboutContent.Visibility = ReferenceEquals(sender.SelectedItem, AboutNavigation) ? Visibility.Visible : Visibility.Collapsed;
+		}
+
+		private static bool IsAutoAwakeRunning() {
+			var processes = Process.GetProcessesByName("autoawake");
+			try {
+				return processes.Length > 0;
+			} finally {
+				foreach (var process in processes) process.Dispose();
+			}
+		}
+
+		private async void StartAutoAwake_Click(object sender, RoutedEventArgs args) {
+			try {
+				Process.Start(new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "autoawake.exe")) { UseShellExecute = true });
+				AutoAwakeNotRunningNotice.IsOpen = false;
+			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is InvalidOperationException || e is Win32Exception || e is System.Runtime.InteropServices.COMException) {
+				var resources = new Microsoft.Windows.ApplicationModel.Resources.ResourceLoader();
+				var dialog = new ContentDialog {
+					XamlRoot = ContentRoot.XamlRoot,
+					Title = resources.GetString("AutoAwakeStartErrorTitle"),
+					Content = resources.GetString("AutoAwakeStartErrorMessage") + "\n\n" + e.Message,
+					CloseButtonText = resources.GetString("DialogClose")
+				};
+				await dialog.ShowAsync();
+			}
 		}
 
 		private void RefreshStartupState() {
