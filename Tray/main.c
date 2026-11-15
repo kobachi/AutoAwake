@@ -8,6 +8,7 @@
 #include <wchar.h>
 #include "resource.h"
 #include "settings.h"
+#include "update_suppression.h"
 
 #pragma comment(lib, "pdh.lib")
 
@@ -35,7 +36,8 @@ static BOOL application_keep_display;
 static BOOL application_keep_unlocked;
 static HANDLE display_request;
 static AwakeSettings settings;
-static wchar_t strings[IDS_POWER_REASON - IDS_TITLE + 1][256];
+static UpdateSuppression update_state;
+static wchar_t strings[IDS_SETTINGS_UPDATE_ERROR - IDS_TITLE + 1][256];
 
 /* Loads the localized application strings.
  * instance: Module containing the string resources.
@@ -43,7 +45,7 @@ static wchar_t strings[IDS_POWER_REASON - IDS_TITLE + 1][256];
 static BOOL load_strings(HINSTANCE instance)
 {
 	UINT id;
-	for (id = IDS_TITLE; id <= IDS_POWER_REASON; ++id) {
+	for (id = IDS_TITLE; id <= IDS_SETTINGS_UPDATE_ERROR; ++id) {
 		int length = LoadStringW(instance, id, strings[id - IDS_TITLE], 256);
 		if (length == 0 || length == 255) {
 			/* A required localized string is missing or may be truncated. */
@@ -83,6 +85,8 @@ static void show_settings_error(HWND window, SettingsResult result)
 		error_id = IDS_SETTINGS_APPLICATION_PATH_ERROR;
 	} else if (result == SETTINGS_INVALID_APPLICATION_ACTION) {
 		error_id = IDS_SETTINGS_APPLICATION_ACTION_ERROR;
+	} else if (result == SETTINGS_INVALID_SUPPRESS_WINDOWS_UPDATE) {
+		error_id = IDS_SETTINGS_UPDATE_ERROR;
 	} else if (result == SETTINGS_INVALID_APPLICATION_VISIBLE_WINDOW) {
 		error_id = IDS_SETTINGS_APPLICATION_VISIBLE_WINDOW_ERROR;
 	}
@@ -103,6 +107,18 @@ static void stop_cpu_monitor(HWND window)
 	have_sample = FALSE;
 }
 
+static void initialize_update_suppression(void)
+{
+	if (!update_init(&update_state, HKEY_LOCAL_MACHINE,
+		L"SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+		L"SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings",
+		L"Global\\Kobachi.AutoAwake.UpdateSuppression")) {
+		OutputDebugStringW(L"AutoAwake: Windows Update suppression initialization failed.\n");
+	} else if (!update_recover(&update_state)) {
+		OutputDebugStringW(L"AutoAwake: Windows Update settings recovery failed; it will be retried.\n");
+	}
+}
+
 /* Reports a fatal monitoring error and shuts down the application.
  * window: Tray window and owner of the error dialog.
  * error_id: Resource identifier of the error message.
@@ -110,6 +126,7 @@ static void stop_cpu_monitor(HWND window)
 static void fail_monitor(HWND window, UINT error_id)
 {
 	stop_cpu_monitor(window);
+	if (!update_set(&update_state, FALSE)) OutputDebugStringW(L"AutoAwake: Windows Update settings restoration failed.\n");
 	if (display_request) {
 		CloseHandle(display_request);
 		display_request = NULL;
@@ -164,6 +181,11 @@ static BOOL set_prevention(HWND window, BOOL enabled, CpuUsageAction action)
 			fail_monitor(window, IDS_POWER_REQUEST_ERROR);
 			return FALSE;
 		}
+	}
+	if (!update_set(&update_state, enabled && settings.suppress_windows_update)) {
+		OutputDebugStringW(update_state.rollback_failed ?
+			L"AutoAwake: Windows Update settings rollback failed; it will be retried.\n" :
+			L"AutoAwake: Windows Update settings could not be changed or restored.\n");
 	}
 	if (active == enabled) {
 		/* The active state is unchanged, so the tray icon needs no update. */
@@ -532,10 +554,15 @@ static LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LP
 			launch_settings(window);
 		}
 		return 0;
+	case WM_ENDSESSION:
+		if (wparam && !update_set(&update_state, FALSE))
+			OutputDebugStringW(L"AutoAwake: Windows Update settings restoration failed during session shutdown.\n");
+		return 0;
 	case WM_DESTROY:
 	{
 		NOTIFYICONDATAW icon = { 0 };
 		stop_cpu_monitor(window);
+		if (!update_close(&update_state)) OutputDebugStringW(L"AutoAwake: Windows Update settings restoration failed during shutdown.\n");
 		KillTimer(window, ID_APPLICATION_TIMER);
 		settings_free(&settings);
 		if (display_request) {
@@ -598,6 +625,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command_line, i
 		CloseHandle(instance_mutex);
 		return launched ? 0 : 1;
 	}
+	initialize_update_suppression();
 	settings_result = settings_load(&settings);
 	if (settings_result != SETTINGS_OK) {
 		/* Initial settings could not be loaded or validated. */

@@ -17,6 +17,7 @@
   <data name="IntervalLabel.Text" xml:space="preserve"><value>Monitoring frequency</value></data>
   <data name="IntervalUnit.Text" xml:space="preserve"><value>seconds</value></data>
   <data name="IntervalInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Monitoring frequency in seconds</value></data>
+  <data name="SuppressWindowsUpdate.Content" xml:space="preserve"><value>Also suppress Windows Update</value></data>
   <data name="CpuEnabled.Content" xml:space="preserve"><value>Prevent sleep when CPU usage is high</value></data>
   <data name="CpuThresholdLabel.Text" xml:space="preserve"><value>Usage:</value></data>
   <data name="CpuThresholdSlider.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>CPU usage threshold</value></data>

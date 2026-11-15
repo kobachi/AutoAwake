@@ -32,14 +32,17 @@
                 <NavigationViewItem x:Uid="ApplicationsNavigation" x:Name="ApplicationsNavigation" Icon="AllApps" />
             </NavigationView.MenuItems>
             <Grid Padding="24">
-                <StackPanel x:Name="GeneralContent" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top" Visibility="Collapsed">
-                    <TextBlock x:Uid="IntervalLabel" VerticalAlignment="Center" />
-                    <NumberBox x:Uid="IntervalInput" x:Name="IntervalInput"
-                               Width="140" Minimum="1" Maximum="86400" SmallChange="1"
-                               SpinButtonPlacementMode="Inline"
-                               Value="{x:Bind Settings.Interval, Mode=OneWay}"
-                               ValueChanged="IntervalInput_ValueChanged" />
-                    <TextBlock x:Uid="IntervalUnit" VerticalAlignment="Center" />
+                <StackPanel x:Name="GeneralContent" Spacing="20" VerticalAlignment="Top" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Uid="IntervalLabel" VerticalAlignment="Center" />
+                        <NumberBox x:Uid="IntervalInput" x:Name="IntervalInput"
+                                   Width="140" Minimum="1" Maximum="86400" SmallChange="1"
+                                   SpinButtonPlacementMode="Inline"
+                                   Value="{x:Bind Settings.Interval, Mode=OneWay}"
+                                   ValueChanged="IntervalInput_ValueChanged" />
+                        <TextBlock x:Uid="IntervalUnit" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <CheckBox x:Uid="SuppressWindowsUpdate" IsChecked="{x:Bind Settings.SuppressWindowsUpdate, Mode=TwoWay}" />
                 </StackPanel>
                 <StackPanel x:Name="CpuContent" Spacing="20" VerticalAlignment="Top" Visibility="Collapsed">
                     <CheckBox x:Uid="CpuEnabled" x:Name="CpuEnabled"

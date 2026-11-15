@@ -30,6 +30,7 @@ typedef struct AwakeSettings {
 	CpuUsageAction cpu_usage_action;
 	ApplicationSettings *applications;
 	size_t application_count;
+	BOOL suppress_windows_update;
 } AwakeSettings;
 
 typedef enum SettingsResult {
@@ -42,7 +43,8 @@ typedef enum SettingsResult {
 	SETTINGS_INVALID_CPU_ACTION,
 	SETTINGS_INVALID_APPLICATION_PATH,
 	SETTINGS_INVALID_APPLICATION_ACTION,
-	SETTINGS_INVALID_APPLICATION_VISIBLE_WINDOW
+	SETTINGS_INVALID_APPLICATION_VISIBLE_WINDOW,
+	SETTINGS_INVALID_SUPPRESS_WINDOWS_UPDATE
 } SettingsResult;
 
 /* Loads settings from the default location, creating them if missing.

@@ -151,7 +151,9 @@
   <ItemGroup>
     <ClCompile Include="main.c" />
     <ClCompile Include="settings.c" />
+    <ClCompile Include="update_suppression.c" />
     <None Include="tests\settings_monitor_tests.c" />
+    <None Include="tests\update_suppression_tests.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Tray.rc" />
@@ -159,6 +161,7 @@
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="settings.h" />
+    <ClInclude Include="update_suppression.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

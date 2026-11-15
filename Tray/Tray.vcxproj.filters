@@ -26,6 +26,9 @@
     <ClCompile Include="main.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="update_suppression.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="settings.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -36,6 +39,9 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="update_suppression.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="settings.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -45,6 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="tests\settings_monitor_tests.c">
+      <Filter>ソース ファイル</Filter>
+    </None>
+    <None Include="tests\update_suppression_tests.c">
       <Filter>ソース ファイル</Filter>
     </None>
     <None Include="README.md" />

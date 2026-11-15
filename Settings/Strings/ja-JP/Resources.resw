@@ -17,6 +17,7 @@
   <data name="IntervalLabel.Text" xml:space="preserve"><value>監視頻度</value></data>
   <data name="IntervalUnit.Text" xml:space="preserve"><value>秒毎</value></data>
   <data name="IntervalInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>監視頻度（秒）</value></data>
+  <data name="SuppressWindowsUpdate.Content" xml:space="preserve"><value>Windows Updateも抑制する</value></data>
   <data name="CpuEnabled.Content" xml:space="preserve"><value>CPU使用率が高い場合にスリープを防止する</value></data>
   <data name="CpuThresholdLabel.Text" xml:space="preserve"><value>使用率:</value></data>
   <data name="CpuThresholdSlider.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>CPU使用率のしきい値</value></data>

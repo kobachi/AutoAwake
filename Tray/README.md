@@ -10,12 +10,14 @@ Interval=30
 CpuUsageEnabled=1
 CpuUsageThreshold=80
 CpuUsageAction=NoSleep
+SuppressWindowsUpdate=1
 ```
 
 - `Interval`: sampling interval in whole seconds from `1` to `86400`; default `30`.
 - `CpuUsageEnabled`: enable (`1`) or disable (`0`) the CPU-based feature; default `1`.
 - `CpuUsageThreshold`: CPU usage threshold in whole percent from `0` to `100`; default `80`.
 - `CpuUsageAction`: action to apply while the CPU condition matches; default `NoSleep`. Values are case-insensitive.
+- `SuppressWindowsUpdate`: request the Windows Update registry changes described below (`1` or `0`); default `1`.
 
 ## Actions
 
@@ -28,6 +30,16 @@ The table describes idle behavior: ○ means allowed and ✗ means prevented. Al
 | `KeepUnlocked` | ✗ | ✗ | ✗ | ✗ |
 
 `KeepUnlocked` requests suppression of idle screen savers and idle automatic locking. Policy and power state may affect the request; it does not prevent explicit sleep or locking.
+
+## Windows Update suppression
+
+While any sleep-prevention condition is active, `SuppressWindowsUpdate=1` sets the machine-wide DWORD `HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU\NoAutoRebootWithLoggedOnUsers` to `1`, and sets `IsContinuousInnovationOptedIn` and `IsExpedited` under `HKLM\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings` to `0`. These settings require permission to write HKLM, normally an elevated administrator. On failure AutoAwake continues sleep prevention without displaying an error; Windows Update suppression may not take effect. Set `SuppressWindowsUpdate=0` to disable this feature.
+
+This is not a guarantee against updates or restarts. Microsoft documents `NoAutoRebootWithLoggedOnUsers` as applicable only when Configure Automatic Updates is set to option 4, and scheduled user restarts may still occur. Windows version, policy and other software may affect all these settings.
+
+Original values are saved alongside each value with an `.AutoAwakeBackup` suffix, preserving type and data. A separate `.AutoAwakeState` marker tracks the transaction, including originally absent values, which have no backup. AutoAwake attempts to restore and remove its records when prevention ends, the setting is disabled, or the app or Windows shuts down. It also attempts recovery at startup even when suppression is disabled or settings cannot be loaded. After a crash or failed restoration, rerun with sufficient privileges to recover; damaged records cannot be restored safely. A backup found without a state marker is treated as an orphan: its type and data are restored to the original value, even if the target is absent, and the backup is deleted. This applies at startup and when suppression ends regardless of the setting. Do not use the `.AutoAwakeBackup` suffix for unrelated values. Failed cleanup is retried during shutdown; remaining records are retried on a later startup. Failures are written to debugger output rather than displayed. Do not edit the managed values or records while suppression is active; external changes can be overwritten by restoration. The keys themselves may remain if they were created for suppression.
+
+A machine-wide mutex prevents different sessions from simultaneously modifying these values. A startup skips recovery while a live instance owns the mutex; another session cannot suppress updates while the mutex is held. Access to an existing mutex can also be denied across users or privilege levels. These failures do not stop sleep prevention. Forced termination or power loss can delay restoration until the next successful startup.
 
 ## Settings window
 
@@ -82,6 +94,8 @@ From `Tray\tests` in a Visual Studio Developer Command Prompt:
 ```bat
 cl /W4 /Fe:settings_monitor_tests.exe settings_monitor_tests.c ..\settings.c /link /subsystem:console shell32.lib user32.lib pdh.lib
 settings_monitor_tests.exe
+cl /W4 /Fe:update_suppression_tests.exe update_suppression_tests.c /link /subsystem:console advapi32.lib
+update_suppression_tests.exe
 ```
 
-The tests use temporary settings files and a short-lived child process. Power and tray calls are stubbed.
+The tests create disposable settings files in the current directory and use a short-lived child process. Power, tray and update calls are stubbed in the monitor tests. Registry tests use uniquely named keys under HKCU only; they never modify the live HKLM Windows Update keys.

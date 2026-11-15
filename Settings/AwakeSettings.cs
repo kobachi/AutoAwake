@@ -33,9 +33,15 @@ namespace Kobachi.AutoAwake {
 
 	public sealed class AwakeSettings : BindableObject {
 		private int interval = 30;
+		private bool suppressWindowsUpdate = true;
 		private bool cpuUsageEnabled = true;
 		private int cpuUsageThreshold = 80;
 		private SleepPreventionAction cpuUsageAction = SleepPreventionAction.NoSleep;
+
+		public bool SuppressWindowsUpdate {
+			get => suppressWindowsUpdate;
+			set => SetProperty(ref suppressWindowsUpdate, value);
+		}
 
 		public int Interval {
 			get => interval;

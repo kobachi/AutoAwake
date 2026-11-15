@@ -151,7 +151,7 @@ static BOOL parse_number(const wchar_t *value, DWORD length, DWORD maximum, DWOR
  */
 static SettingsResult load_file(const wchar_t *path, AwakeSettings *settings, BOOL create)
 {
-	static const wchar_t initial_contents[] = L"\xFEFF[General]\r\nInterval=30\r\nCpuUsageEnabled=1\r\nCpuUsageThreshold=80\r\nCpuUsageAction=NoSleep\r\n";
+	static const wchar_t initial_contents[] = L"\xFEFF[General]\r\nInterval=30\r\nCpuUsageEnabled=1\r\nCpuUsageThreshold=80\r\nCpuUsageAction=NoSleep\r\nSuppressWindowsUpdate=1\r\n";
 	HANDLE file;
 	DWORD transferred;
 	DWORD value_length;
@@ -164,7 +164,8 @@ static SettingsResult load_file(const wchar_t *path, AwakeSettings *settings, BO
 	wchar_t interval_value[16];
 	wchar_t threshold_value[16];
 	wchar_t action_value[16];
-	AwakeSettings loaded = { 30, TRUE, 80, CPU_USAGE_KEEP_SYSTEM_AWAKE, NULL, 0 };
+	wchar_t suppress_value[16];
+	AwakeSettings loaded = { 30, TRUE, 80, CPU_USAGE_KEEP_SYSTEM_AWAKE, NULL, 0, TRUE };
 	SettingsResult result;
 
 	if (create) {
@@ -202,10 +203,14 @@ static SettingsResult load_file(const wchar_t *path, AwakeSettings *settings, BO
 	interval_length = GetPrivateProfileStringW(L"General", L"Interval", L"30", interval_value, ARRAYSIZE(interval_value), path);
 	threshold_length = GetPrivateProfileStringW(L"General", L"CpuUsageThreshold", L"80", threshold_value, ARRAYSIZE(threshold_value), path);
 	action_length = GetPrivateProfileStringW(L"General", L"CpuUsageAction", L"NoSleep", action_value, ARRAYSIZE(action_value), path);
+	GetPrivateProfileStringW(L"General", L"SuppressWindowsUpdate", L"1", suppress_value, ARRAYSIZE(suppress_value), path);
 	if (!CloseHandle(file)) {
 		/* The settings file handle could not be closed. */
 		return SETTINGS_IO_ERROR;
 	}
+	if (lstrcmpW(suppress_value, L"1") == 0) loaded.suppress_windows_update = TRUE;
+	else if (lstrcmpW(suppress_value, L"0") == 0) loaded.suppress_windows_update = FALSE;
+	else return SETTINGS_INVALID_SUPPRESS_WINDOWS_UPDATE;
 	if (!value_length) {
 		/* The CPU enable value is empty. */
 		return SETTINGS_INVALID_VALUE;

@@ -39,6 +39,9 @@ BEGIN
     IDS_SETTINGS_LAUNCH_ERROR "Could not launch Settings.exe from the AutoAwake folder."
     IDS_INSTANCE_ERROR "Could not check whether AutoAwake is already running."
     IDS_POWER_REASON "Prevent screen saver and idle lock while an AutoAwake condition is active"
+    IDS_SETTINGS_UPDATE_ERROR "General/SuppressWindowsUpdate must be 0 or 1."
+    IDS_UPDATE_ERROR "Could not change or restore Windows Update settings. Administrator access may be required, or another session may be using them. AutoAwake will exit; retry as administrator to recover."
+    IDS_UPDATE_ROLLBACK_ERROR "Windows Update rollback failed. AutoAwake will retry cleanup while exiting; if needed, restart as administrator to restore the saved settings."
 END
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
@@ -74,4 +77,7 @@ BEGIN
     IDS_SETTINGS_LAUNCH_ERROR "AutoAwake と同じフォルダーの Settings.exe を起動できませんでした。"
     IDS_INSTANCE_ERROR "AutoAwake が既に起動しているか確認できませんでした。"
     IDS_POWER_REASON "AutoAwake の条件が有効な間、スクリーンセーバーと自動ロックを防止"
+    IDS_SETTINGS_UPDATE_ERROR "General/SuppressWindowsUpdate には 0 または 1 を指定してください。"
+    IDS_UPDATE_ERROR "Windows Update の設定を変更または復元できません。管理者権限が必要か、別のセッションで使用中です。管理者として再実行して復元してください。"
+    IDS_UPDATE_ROLLBACK_ERROR "Windows Update 設定の復元に失敗しました。終了時に再試行します。必要に応じて管理者として再起動してください。"
 END

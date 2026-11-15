@@ -4,6 +4,23 @@
 #include <strsafe.h>
 #include <stdio.h>
 #include <wchar.h>
+#include "..\update_suppression.h"
+
+static BOOL update_mock_enabled;
+static int update_mock_calls;
+static BOOL update_mock_failure;
+static BOOL update_mock_rollback_failure;
+static BOOL update_init_failure, update_recover_failure;
+static int update_recover_calls, update_diagnostics;
+static BOOL test_update_set(UpdateSuppression *state, BOOL enabled) {
+	(void)state; ++update_mock_calls; if (update_mock_failure) { update_mock_failure = FALSE; state->rollback_failed = update_mock_rollback_failure; return FALSE; } update_mock_enabled = enabled; return TRUE;
+}
+static BOOL test_update_init(UpdateSuppression *state, HKEY root, const wchar_t *a, const wchar_t *b, const wchar_t *name) {
+	(void)state; (void)root; (void)a; (void)b; (void)name; return !update_init_failure;
+}
+static BOOL test_update_recover(UpdateSuppression *state) { (void)state; ++update_recover_calls; return !update_recover_failure; }
+static void WINAPI test_debug_output(LPCWSTR message) { (void)message; ++update_diagnostics; }
+static BOOL test_update_close(UpdateSuppression *state) { return test_update_set(state, FALSE); }
 
 static EXECUTION_STATE last_flags;
 static int monitor_errors;
@@ -115,6 +132,11 @@ static int WINAPI test_message_box(HWND window, LPCWSTR message, LPCWSTR title, 
 	return IDOK;
 }
 
+#define update_init test_update_init
+#define update_recover test_update_recover
+#define update_set test_update_set
+#define update_close test_update_close
+#define OutputDebugStringW test_debug_output
 #define SetThreadExecutionState test_execution_state
 #define PowerCreateRequest test_power_create
 #define PowerSetRequest test_power_set
@@ -126,6 +148,10 @@ static int WINAPI test_message_box(HWND window, LPCWSTR message, LPCWSTR title, 
 #define CreateMutexW test_create_mutex
 #define LoadStringW test_load_string
 #include "..\main.c"
+#undef update_init
+#undef update_recover
+#undef update_set
+#undef update_close
 #undef CreateMutexW
 #undef LoadStringW
 #undef SetThreadExecutionState
@@ -208,12 +234,12 @@ int main(int argc, char **argv)
 	CHECK(launch_count == 4 && monitor_errors == 2);
 	mutex_failure = FALSE;
 	monitor_errors = 0;
-	CHECK(GetTempPathW(ARRAYSIZE(directory), directory) != 0);
+	CHECK(GetCurrentDirectoryW(ARRAYSIZE(directory), directory) != 0);
 	CHECK(GetTempFileNameW(directory, L"awk", 0, ini) != 0);
 	CHECK(DeleteFileW(ini));
 	CHECK(settings_load_file(ini, &loaded) == SETTINGS_OK);
 	CHECK(loaded.interval_seconds == 30 && loaded.cpu_usage_enabled && loaded.cpu_usage_threshold == 80);
-	CHECK(loaded.cpu_usage_action == CPU_USAGE_KEEP_SYSTEM_AWAKE && loaded.application_count == 0);
+	CHECK(loaded.cpu_usage_action == CPU_USAGE_KEEP_SYSTEM_AWAKE && loaded.application_count == 0 && loaded.suppress_windows_update);
 	settings_free(&loaded);
 	file = CreateFileW(ini, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	CHECK(file != INVALID_HANDLE_VALUE);
@@ -221,7 +247,7 @@ int main(int argc, char **argv)
 	CHECK(CloseHandle(file));
 	CHECK(bytes % sizeof(wchar_t) == 0);
 	contents[bytes / sizeof(wchar_t)] = L'\0';
-	CHECK(wcscmp(contents, L"\xFEFF[General]\r\nInterval=30\r\nCpuUsageEnabled=1\r\nCpuUsageThreshold=80\r\nCpuUsageAction=NoSleep\r\n") == 0);
+	CHECK(wcscmp(contents, L"\xFEFF[General]\r\nInterval=30\r\nCpuUsageEnabled=1\r\nCpuUsageThreshold=80\r\nCpuUsageAction=NoSleep\r\nSuppressWindowsUpdate=1\r\n") == 0);
 	length = GetModuleFileNameW(NULL, executable, ARRAYSIZE(executable));
 	CHECK(length > 0 && length < ARRAYSIZE(executable));
 	CHECK(SUCCEEDED(StringCchPrintfW(contents, ARRAYSIZE(contents),
@@ -248,7 +274,11 @@ int main(int argc, char **argv)
 		0, 0, 10, 10, top_window, NULL, GetModuleHandleW(NULL), NULL);
 	CHECK(child_window != NULL);
 	CHECK(scan_applications(NULL));
-	CHECK(application_no_sleep && !application_keep_display);
+	CHECK(application_no_sleep && !application_keep_display && update_mock_enabled);
+	settings.suppress_windows_update = FALSE;
+	CHECK(update_prevention(NULL) && !update_mock_enabled);
+	settings.suppress_windows_update = TRUE;
+	CHECK(update_prevention(NULL) && update_mock_enabled);
 	ShowWindow(top_window, SW_SHOWNOACTIVATE);
 	CHECK(IsWindowVisible(top_window));
 	CHECK(scan_applications(NULL));
@@ -390,6 +420,38 @@ int main(int argc, char **argv)
 	CHECK(settings_directory(contents, ARRAYSIZE(contents)));
 	CHECK(wcslen(contents) >= wcslen(L"\\AutoAwake"));
 	CHECK(wcscmp(contents + wcslen(contents) - wcslen(L"\\AutoAwake"), L"\\AutoAwake") == 0);
+	CHECK(write_settings(ini, L"\xFEFF[General]\r\nSuppressWindowsUpdate=0\r\n"));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_OK && !invalid.suppress_windows_update);
+	settings_free(&invalid);
+	CHECK(write_settings(ini, L"\xFEFF[General]\r\nSuppressWindowsUpdate=2\r\n"));
+	CHECK(settings_load_file(ini, &invalid) == SETTINGS_INVALID_SUPPRESS_WINDOWS_UPDATE);
+	update_init_failure = TRUE;
+	initialize_update_suppression();
+	CHECK(update_diagnostics == 1 && update_recover_calls == 0 && monitor_errors == 0);
+	update_init_failure = FALSE;
+	update_recover_failure = TRUE;
+	initialize_update_suppression();
+	CHECK(update_diagnostics == 2 && update_recover_calls == 1 && monitor_errors == 0);
+	update_recover_failure = FALSE;
+	update_mock_enabled = TRUE;
+	update_mock_failure = TRUE;
+	window_proc(NULL, WM_ENDSESSION, TRUE, 0);
+	CHECK(update_mock_enabled && monitor_errors == 0 && update_diagnostics == 3);
+	window_proc(NULL, WM_ENDSESSION, TRUE, 0);
+	CHECK(!update_mock_enabled);
+	update_mock_failure = TRUE;
+	window_proc(NULL, WM_DESTROY, 0, 0);
+	CHECK(monitor_errors == 0 && update_diagnostics == 4);
+	settings.suppress_windows_update = TRUE;
+	update_mock_failure = TRUE;
+	update_mock_rollback_failure = TRUE;
+	CHECK(set_prevention(NULL, TRUE, CPU_USAGE_KEEP_SYSTEM_AWAKE));
+	CHECK(active && (last_flags & ES_SYSTEM_REQUIRED) && monitor_errors == 0 && update_diagnostics == 5);
+	CHECK(set_prevention(NULL, TRUE, CPU_USAGE_KEEP_SYSTEM_AWAKE) && update_mock_enabled);
+	update_mock_failure = TRUE;
+	CHECK(set_prevention(NULL, FALSE, CPU_USAGE_KEEP_SYSTEM_AWAKE));
+	CHECK(!active && last_flags == ES_CONTINUOUS && monitor_errors == 0 && update_diagnostics == 6);
+	CHECK(set_prevention(NULL, FALSE, CPU_USAGE_KEEP_SYSTEM_AWAKE) && !update_mock_enabled);
 	CHECK(DeleteFileW(ini));
 	puts("settings and monitor tests passed");
 	return 0;

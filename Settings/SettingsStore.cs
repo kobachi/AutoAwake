@@ -47,7 +47,7 @@ namespace Kobachi.AutoAwake {
 				try {
 					using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
 					using (var writer = new StreamWriter(stream, FileEncoding)) {
-						writer.Write("[General]\r\nInterval=30\r\nCpuUsageEnabled=1\r\nCpuUsageThreshold=80\r\nCpuUsageAction=NoSleep\r\n");
+						writer.Write("[General]\r\nInterval=30\r\nSuppressWindowsUpdate=1\r\nCpuUsageEnabled=1\r\nCpuUsageThreshold=80\r\nCpuUsageAction=NoSleep\r\n");
 					}
 					File.Move(temp, path);
 				} finally {
@@ -61,6 +61,7 @@ namespace Kobachi.AutoAwake {
 			catch (DecoderFallbackException e) { throw new FormatException("The settings file contains invalid UTF-16.", e); }
 
 			var settings = new AwakeSettings();
+			settings.SuppressWindowsUpdate = ParseBoolean(ReadValue(path, "General", "SuppressWindowsUpdate", "1"), "SuppressWindowsUpdate");
 			settings.CpuUsageEnabled = ParseBoolean(ReadValue(path, "General", "CpuUsageEnabled", "1"), "CpuUsageEnabled");
 			settings.Interval = ParseNumber(ReadValue(path, "General", "Interval", "30"), 1, 86400, "Interval");
 			settings.CpuUsageThreshold = ParseNumber(ReadValue(path, "General", "CpuUsageThreshold", "80"), 0, 100, "CpuUsageThreshold");
@@ -201,6 +202,7 @@ namespace Kobachi.AutoAwake {
 					}
 				}
 				WriteValue(temp, "General", "Interval", Settings.Interval.ToString(CultureInfo.InvariantCulture));
+				WriteValue(temp, "General", "SuppressWindowsUpdate", Settings.SuppressWindowsUpdate ? "1" : "0");
 				WriteValue(temp, "General", "CpuUsageEnabled", Settings.CpuUsageEnabled ? "1" : "0");
 				WriteValue(temp, "General", "CpuUsageThreshold", Settings.CpuUsageThreshold.ToString(CultureInfo.InvariantCulture));
 				WriteValue(temp, "General", "CpuUsageAction", Settings.CpuUsageAction.ToString());
