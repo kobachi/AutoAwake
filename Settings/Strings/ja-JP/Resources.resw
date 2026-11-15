@@ -11,6 +11,11 @@
   <data name="SettingsLoadError" xml:space="preserve"><value>設定ファイルを読み込めませんでした。</value></data>
   <data name="SettingsInstanceError" xml:space="preserve"><value>設定アプリが既に起動しているか確認できませんでした。</value></data>
   <data name="SettingsSaveError" xml:space="preserve"><value>設定を保存できませんでした。値を修正するかファイルの問題を解決してください。次の変更時に再度保存します。</value></data>
+  <data name="StartupNotice.Message" xml:space="preserve"><value>AutoAwakeがスタートアップに登録されていません</value></data>
+  <data name="StartupHeading.Text" xml:space="preserve"><value>スタートアップ</value></data>
+  <data name="RegisterStartup.Content" xml:space="preserve"><value>スタートアップに登録</value></data>
+  <data name="RemoveStartup.Content" xml:space="preserve"><value>スタートアップから削除</value></data>
+  <data name="StartupErrorTitle" xml:space="preserve"><value>スタートアップを変更できませんでした</value></data>
   <data name="GeneralNavigation.Content" xml:space="preserve"><value>全体</value></data>
   <data name="CpuNavigation.Content" xml:space="preserve"><value>CPU使用率</value></data>
   <data name="ApplicationsNavigation.Content" xml:space="preserve"><value>アプリ</value></data>

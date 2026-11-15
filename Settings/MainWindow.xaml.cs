@@ -36,6 +36,7 @@ namespace Kobachi.AutoAwake {
 			settingsStore = SettingsStore.OpenDefault();
 			settingsStore.SaveFailed += SettingsError.ShowSaveError;
 			InitializeComponent();
+			RefreshStartupState();
 			ContentRoot.DataContext = Settings;
 			Navigation.SelectedItem = GeneralNavigation;
 			GeneralContent.Visibility = Visibility.Visible;
@@ -137,6 +138,44 @@ namespace Kobachi.AutoAwake {
 			GeneralContent.Visibility = sender.SelectedItem == GeneralNavigation ? Visibility.Visible : Visibility.Collapsed;
 			CpuContent.Visibility = sender.SelectedItem == CpuNavigation ? Visibility.Visible : Visibility.Collapsed;
 			ApplicationsContent.Visibility = sender.SelectedItem == ApplicationsNavigation ? Visibility.Visible : Visibility.Collapsed;
+		}
+
+		private void RefreshStartupState() {
+			bool registered = StartupRegistration.IsRegistered();
+			StartupNotice.IsOpen = !registered;
+			RegisterStartup.IsEnabled = !registered;
+			RemoveStartup.IsEnabled = registered;
+		}
+
+		private async void RegisterStartup_Click(object sender, RoutedEventArgs args) => await ChangeStartupRegistration(true);
+
+		private async void RemoveStartup_Click(object sender, RoutedEventArgs args) => await ChangeStartupRegistration(false);
+
+		private async System.Threading.Tasks.Task ChangeStartupRegistration(bool register) {
+			RegisterStartup.IsEnabled = false;
+			RemoveStartup.IsEnabled = false;
+			string? error = null;
+			try {
+				if (register) StartupRegistration.Register();
+				else StartupRegistration.Remove();
+			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException || e is System.Runtime.InteropServices.COMException) {
+				error = e.Message;
+			}
+			try {
+				RefreshStartupState();
+			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException) {
+				error = error == null ? e.Message : error + "\n" + e.Message;
+			}
+			if (error != null) {
+				var resources = new Microsoft.Windows.ApplicationModel.Resources.ResourceLoader();
+				var dialog = new ContentDialog {
+					XamlRoot = ContentRoot.XamlRoot,
+					Title = resources.GetString("StartupErrorTitle"),
+					Content = error,
+					CloseButtonText = resources.GetString("DialogClose")
+				};
+				await dialog.ShowAsync();
+			}
 		}
 
 		private async void AddApplication_Click(object sender, RoutedEventArgs args) {
