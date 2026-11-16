@@ -19,7 +19,13 @@
   <data name="StartupHeading.Text" xml:space="preserve"><value>スタートアップ</value></data>
   <data name="RegisterStartup.Content" xml:space="preserve"><value>スタートアップに登録</value></data>
   <data name="RemoveStartup.Content" xml:space="preserve"><value>スタートアップから削除</value></data>
-  <data name="StartupErrorTitle" xml:space="preserve"><value>スタートアップを変更できませんでした</value></data>
+  <data name="StartupErrorTitle" xml:space="preserve"><value>スタートアップの状態を取得または変更できませんでした</value></data>
+  <data name="StartupStateDisabled" xml:space="preserve"><value>自動起動は無効です。</value></data>
+  <data name="StartupStateEnabled" xml:space="preserve"><value>自動起動は有効です。</value></data>
+  <data name="StartupStateDisabledByUser" xml:space="preserve"><value>Windowsで自動起動が無効にされています。再度有効にするにはWindowsの設定の「アプリ」＞「スタートアップ」でAutoAwakeを有効にしてください。</value></data>
+  <data name="StartupStateDisabledByPolicy" xml:space="preserve"><value>自動起動は管理者のポリシーまたはWindowsによって禁止されています。</value></data>
+  <data name="StartupStateEnabledByPolicy" xml:space="preserve"><value>自動起動は管理者のポリシーによって有効です。</value></data>
+  <data name="StartupUnavailable" xml:space="preserve"><value>自動起動の設定はMSIXパッケージでインストールした場合のみ利用できます。</value></data>
   <data name="GeneralNavigation.Content" xml:space="preserve"><value>全体</value></data>
   <data name="CpuNavigation.Content" xml:space="preserve"><value>CPU使用率</value></data>
   <data name="ApplicationsNavigation.Content" xml:space="preserve"><value>アプリ</value></data>

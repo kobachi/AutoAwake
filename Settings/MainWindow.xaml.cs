@@ -32,6 +32,7 @@ namespace Kobachi.AutoAwake {
 		private readonly DispatcherQueue uiQueue;
 		private bool initialized;
 		private bool closed;
+		private bool startupBusy;
 		public AwakeSettings Settings => settingsStore.Settings;
 
 		public MainWindow() {
@@ -39,7 +40,6 @@ namespace Kobachi.AutoAwake {
 			settingsStore.SaveFailed += SettingsError.ShowSaveError;
 			InitializeComponent();
 			AutoAwakeNotRunningNotice.IsOpen = !IsAutoAwakeRunning();
-			RefreshStartupState();
 			var about = new AboutInformation(typeof(MainWindow).Assembly);
 			AboutTitle.Text = about.TitleAndVersion;
 			AboutCopyright.Text = about.Copyright;
@@ -83,9 +83,10 @@ namespace Kobachi.AutoAwake {
 			boundsSaveTimer.IsRepeating = false;
 			boundsSaveTimer.Tick += (_, _) => SaveWindowBounds();
 			AppWindow.Changed += AppWindow_Changed;
-			Activated += (_, _) => {
+			Activated += async (_, args) => {
 				QueueTitleBarThemeUpdate();
 				SaveWindowBounds();
+				if (args.WindowActivationState != WindowActivationState.Deactivated) await UpdateStartupAsync(null);
 			};
 			Closed += (_, _) => {
 				closed = true;
@@ -174,41 +175,48 @@ namespace Kobachi.AutoAwake {
 			}
 		}
 
-		private void RefreshStartupState() {
-			bool registered = StartupRegistration.IsRegistered();
-			StartupNotice.IsOpen = !registered;
-			RegisterStartup.IsEnabled = !registered;
-			RemoveStartup.IsEnabled = registered;
-		}
+		private async void RegisterStartup_Click(object sender, RoutedEventArgs args) => await UpdateStartupAsync(true);
 
-		private async void RegisterStartup_Click(object sender, RoutedEventArgs args) => await ChangeStartupRegistration(true);
+		private async void RemoveStartup_Click(object sender, RoutedEventArgs args) => await UpdateStartupAsync(false);
 
-		private async void RemoveStartup_Click(object sender, RoutedEventArgs args) => await ChangeStartupRegistration(false);
-
-		private async System.Threading.Tasks.Task ChangeStartupRegistration(bool register) {
+		private async System.Threading.Tasks.Task UpdateStartupAsync(bool? enable) {
+			if (startupBusy || closed) return;
+			startupBusy = true;
 			RegisterStartup.IsEnabled = false;
 			RemoveStartup.IsEnabled = false;
-			string? error = null;
+			var resources = new Microsoft.Windows.ApplicationModel.Resources.ResourceLoader();
 			try {
-				if (register) StartupRegistration.Register();
-				else StartupRegistration.Remove();
-			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException || e is System.Runtime.InteropServices.COMException) {
-				error = e.Message;
-			}
-			try {
-				RefreshStartupState();
-			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException) {
-				error = error == null ? e.Message : error + "\n" + e.Message;
-			}
-			if (error != null) {
-				var resources = new Microsoft.Windows.ApplicationModel.Resources.ResourceLoader();
-				var dialog = new ContentDialog {
-					XamlRoot = ContentRoot.XamlRoot,
-					Title = resources.GetString("StartupErrorTitle"),
-					Content = error,
-					CloseButtonText = resources.GetString("DialogClose")
+				if (!StartupRegistration.IsPackaged()) {
+					StartupStateMessage.Text = resources.GetString("StartupUnavailable");
+					StartupNotice.Message = StartupStateMessage.Text;
+					StartupNotice.IsOpen = true;
+					return;
+				}
+				if (enable.HasValue) await StartupRegistration.SetEnabledAsync(enable.Value);
+				var state = await StartupRegistration.GetStateAsync();
+				if (closed) return;
+				string key = state switch {
+					Windows.ApplicationModel.StartupTaskState.Disabled => "StartupStateDisabled",
+					Windows.ApplicationModel.StartupTaskState.DisabledByUser => "StartupStateDisabledByUser",
+					Windows.ApplicationModel.StartupTaskState.DisabledByPolicy => "StartupStateDisabledByPolicy",
+					Windows.ApplicationModel.StartupTaskState.Enabled => "StartupStateEnabled",
+					Windows.ApplicationModel.StartupTaskState.EnabledByPolicy => "StartupStateEnabledByPolicy",
+					_ => throw new InvalidOperationException("Unknown startup task state: " + state)
 				};
-				await dialog.ShowAsync();
+				StartupStateMessage.Text = resources.GetString(key);
+				bool enabled = state == Windows.ApplicationModel.StartupTaskState.Enabled || state == Windows.ApplicationModel.StartupTaskState.EnabledByPolicy;
+				StartupNotice.IsOpen = !enabled;
+				StartupNotice.Message = resources.GetString(key);
+				RegisterStartup.IsEnabled = state == Windows.ApplicationModel.StartupTaskState.Disabled;
+				RemoveStartup.IsEnabled = state == Windows.ApplicationModel.StartupTaskState.Enabled;
+			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is Win32Exception || e is System.Runtime.InteropServices.COMException) {
+				if (!closed) {
+					StartupNotice.IsOpen = true;
+					StartupNotice.Message = resources.GetString("StartupErrorTitle") + "\n" + e.Message;
+					StartupStateMessage.Text = StartupNotice.Message;
+				}
+			} finally {
+				startupBusy = false;
 			}
 		}
 

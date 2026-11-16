@@ -19,7 +19,13 @@
   <data name="StartupHeading.Text" xml:space="preserve"><value>Startup</value></data>
   <data name="RegisterStartup.Content" xml:space="preserve"><value>Add to startup</value></data>
   <data name="RemoveStartup.Content" xml:space="preserve"><value>Remove from startup</value></data>
-  <data name="StartupErrorTitle" xml:space="preserve"><value>Could not change startup registration</value></data>
+  <data name="StartupErrorTitle" xml:space="preserve"><value>Could not read or change startup registration</value></data>
+  <data name="StartupStateDisabled" xml:space="preserve"><value>Startup is disabled.</value></data>
+  <data name="StartupStateEnabled" xml:space="preserve"><value>Startup is enabled.</value></data>
+  <data name="StartupStateDisabledByUser" xml:space="preserve"><value>Startup was disabled in Windows. To re-enable it, turn on AutoAwake under Settings &gt; Apps &gt; Startup.</value></data>
+  <data name="StartupStateDisabledByPolicy" xml:space="preserve"><value>Startup is blocked by administrator policy or Windows.</value></data>
+  <data name="StartupStateEnabledByPolicy" xml:space="preserve"><value>Startup is enabled by administrator policy.</value></data>
+  <data name="StartupUnavailable" xml:space="preserve"><value>Startup settings are available only when installed as an MSIX package.</value></data>
   <data name="GeneralNavigation.Content" xml:space="preserve"><value>General</value></data>
   <data name="CpuNavigation.Content" xml:space="preserve"><value>CPU usage</value></data>
   <data name="ApplicationsNavigation.Content" xml:space="preserve"><value>Apps</value></data>

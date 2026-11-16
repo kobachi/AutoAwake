@@ -5,10 +5,11 @@
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
   xmlns:uap18="http://schemas.microsoft.com/appx/manifest/uap/windows10/18"
-  IgnorableNamespaces="uap uap10 rescap systemai uap18">
+  IgnorableNamespaces="uap uap10 desktop rescap systemai uap18">
 
   <Identity
     Name="293f3103-ea2f-46b8-8eaa-e68b10d9e06e"
@@ -48,6 +49,11 @@
         <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png"  Square71x71Logo="Images\SmallTile.png" Square310x310Logo="Images\LargeTile.png"/>
         <uap:SplashScreen Image="Images\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <desktop:Extension Category="windows.startupTask" Executable="AutoAwakeCore.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="AutoAwakeCoreStartup" Enabled="false" DisplayName="AutoAwake" />
+        </desktop:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
