@@ -37,6 +37,9 @@ public sealed partial class AwakeSettings : BindableObject {
 		set => SetProperty(ref field, value);
 	} = SleepPreventionAction.NoSleep;
 
+	/// <summary>Gets the global baseline hotkey settings.</summary>
+	public HotkeySettings Hotkeys { get; } = new();
+
 	/// <summary>Gets the per-application sleep-prevention settings.</summary>
 	public ObservableCollection<ApplicationSettings> Applications { get; } = new();
 

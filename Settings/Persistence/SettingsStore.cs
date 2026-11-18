@@ -44,6 +44,9 @@ public sealed partial class SettingsStore : IDisposable {
 	/// <summary>Maps current application rules to their original file section names.</summary>
 	private Dictionary<ApplicationSettings, string> savedSections;
 
+	/// <summary>Tracks hotkey properties changed since their last successful save.</summary>
+	private readonly HashSet<string> changedHotkeys = new(StringComparer.Ordinal);
+
 	/// <summary>Tracks the most recently reported save error to avoid duplicate notifications.</summary>
 	private string? lastError;
 
@@ -64,6 +67,7 @@ public sealed partial class SettingsStore : IDisposable {
 		WindowBounds = windowBounds;
 		savedSections = sections;
 		Settings.PropertyChanged += OnPropertyChanged;
+		Settings.Hotkeys.PropertyChanged += OnHotkeyChanged;
 		Settings.Applications.CollectionChanged += OnCollectionChanged;
 		UpdateSubscriptions();
 	}
@@ -111,6 +115,8 @@ public sealed partial class SettingsStore : IDisposable {
 			CpuUsageThreshold = ParseNumber(ReadValue(path, "General", "CpuUsageThreshold", "80"), 0, 100, "CpuUsageThreshold"),
 			CpuUsageAction = ParseAction(ReadValue(path, "General", "CpuUsageAction", "NoSleep"), "CpuUsageAction")
 		};
+		ReadHotkeys(path, settings.Hotkeys);
+		settings.Hotkeys.Validate();
 		var sections = new Dictionary<ApplicationSettings, string>();
 		var allSections = ReadSections(path, checked(bytes.Length / 2 + 2));
 		(int X, int Y, int Width, int Height)? windowBounds = null;
@@ -133,6 +139,14 @@ public sealed partial class SettingsStore : IDisposable {
 		}
 		Validate(settings);
 		return new SettingsStore(path, settings, sections, windowBounds);
+	}
+
+	/// <summary>Reads the baseline hotkeys from the General section.</summary>
+	private static void ReadHotkeys(string file, HotkeySettings hotkeys) {
+		hotkeys.Auto = ReadValue(file, "General", "HotkeyAuto", "", 64);
+		hotkeys.NoSleep = ReadValue(file, "General", "HotkeyNoSleep", "", 64);
+		hotkeys.KeepDisplay = ReadValue(file, "General", "HotkeyKeepDisplay", "", 64);
+		hotkeys.KeepUnlocked = ReadValue(file, "General", "HotkeyKeepUnlocked", "", 64);
 	}
 
 	/// <summary>Reads the settings file, retrying transient sharing violations for up to five seconds.</summary>
@@ -246,6 +260,13 @@ public sealed partial class SettingsStore : IDisposable {
 		TrySave();
 	}
 
+	/// <summary>Tracks and saves an edited hotkey.</summary>
+	private void OnHotkeyChanged(object? sender, PropertyChangedEventArgs e) {
+		if (e.PropertyName is null) throw new InvalidOperationException("A hotkey property name is required.");
+		changedHotkeys.Add(e.PropertyName);
+		TrySave();
+	}
+
 	/// <summary>Updates subscriptions and saves when an application rule is added or removed.</summary>
 	private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
 		UpdateSubscriptions();
@@ -301,6 +322,9 @@ public sealed partial class SettingsStore : IDisposable {
 		var temp = Path.Combine(directory, "." + Guid.NewGuid().ToString("N") + ".tmp");
 		try {
 			File.Copy(path, temp, false);
+			if (changedHotkeys.Count != 0) {
+				SaveHotkeys(temp);
+			}
 			var existing = new Dictionary<ApplicationSettings, string>();
 			foreach (var pair in savedSections.Where(pair => !Settings.Applications.Contains(pair.Key) || !string.Equals(pair.Value, pair.Key.SectionName, StringComparison.Ordinal))) {
 				existing.Add(pair.Key, ReadSection(temp, pair.Value));
@@ -329,11 +353,27 @@ public sealed partial class SettingsStore : IDisposable {
 			}
 			File.Move(temp, path, true);
 			savedSections = updated;
+			changedHotkeys.Clear();
 		} finally {
 			if (File.Exists(temp)) {
 				File.Delete(temp);
 			}
 		}
+	}
+
+	/// <summary>Validates edited shortcuts against the latest file and writes only changed keys.</summary>
+	private void SaveHotkeys(string file) {
+		var current = new HotkeySettings();
+		ReadHotkeys(file, current);
+		if (changedHotkeys.Contains(nameof(HotkeySettings.Auto))) current.Auto = Settings.Hotkeys.Auto;
+		if (changedHotkeys.Contains(nameof(HotkeySettings.NoSleep))) current.NoSleep = Settings.Hotkeys.NoSleep;
+		if (changedHotkeys.Contains(nameof(HotkeySettings.KeepDisplay))) current.KeepDisplay = Settings.Hotkeys.KeepDisplay;
+		if (changedHotkeys.Contains(nameof(HotkeySettings.KeepUnlocked))) current.KeepUnlocked = Settings.Hotkeys.KeepUnlocked;
+		current.Validate();
+		if (changedHotkeys.Contains(nameof(HotkeySettings.Auto))) WriteValue(file, "General", "HotkeyAuto", current.Auto);
+		if (changedHotkeys.Contains(nameof(HotkeySettings.NoSleep))) WriteValue(file, "General", "HotkeyNoSleep", current.NoSleep);
+		if (changedHotkeys.Contains(nameof(HotkeySettings.KeepDisplay))) WriteValue(file, "General", "HotkeyKeepDisplay", current.KeepDisplay);
+		if (changedHotkeys.Contains(nameof(HotkeySettings.KeepUnlocked))) WriteValue(file, "General", "HotkeyKeepUnlocked", current.KeepUnlocked);
 	}
 
 	/// <summary>Reads an INI key value and checks its length limit.</summary>
@@ -378,6 +418,7 @@ public sealed partial class SettingsStore : IDisposable {
 	/// <summary>Unsubscribes from settings change events.</summary>
 	public void Dispose() {
 		Settings.PropertyChanged -= OnPropertyChanged;
+		Settings.Hotkeys.PropertyChanged -= OnHotkeyChanged;
 		Settings.Applications.CollectionChanged -= OnCollectionChanged;
 		foreach (var rule in subscribed) rule.PropertyChanged -= OnPropertyChanged;
 		subscribed.Clear();

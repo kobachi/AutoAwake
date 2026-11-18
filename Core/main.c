@@ -14,6 +14,10 @@
 
 #define ID_TRAY 1
 #define ID_EXIT 2
+#define ID_BASELINE_AUTO 10
+#define ID_BASELINE_NO_SLEEP 11
+#define ID_BASELINE_KEEP_DISPLAY 12
+#define ID_BASELINE_KEEP_UNLOCKED 13
 #define ID_SETTINGS_TIMER 1
 #define ID_CPU_TIMER 2
 #define ID_APPLICATION_TIMER 3
@@ -37,7 +41,16 @@ static BOOL application_keep_unlocked;
 static HANDLE display_request;
 static AwakeSettings settings;
 static UpdateSuppression update_state;
-static wchar_t strings[IDS_SETTINGS_UPDATE_ERROR - IDS_TITLE + 1][256];
+static wchar_t strings[IDS_HOTKEY_REGISTER_ERROR - IDS_TITLE + 1][256];
+
+/* Baseline sleep prevention chosen from the tray menu; held only while running. */
+static BOOL baseline_enabled;
+static CpuUsageAction baseline_action;
+
+/* Hotkey state: the combinations last applied, which are registered, and which failures were reported. */
+static Hotkey applied_hotkeys[HOTKEY_COUNT];
+static BOOL hotkey_registered[HOTKEY_COUNT];
+static BOOL hotkey_failure_reported[HOTKEY_COUNT];
 
 /* Loads the localized application strings.
  * instance: Module containing the string resources.
@@ -45,7 +58,7 @@ static wchar_t strings[IDS_SETTINGS_UPDATE_ERROR - IDS_TITLE + 1][256];
 static BOOL load_strings(HINSTANCE instance)
 {
 	UINT id;
-	for (id = IDS_TITLE; id <= IDS_SETTINGS_UPDATE_ERROR; ++id) {
+	for (id = IDS_TITLE; id <= IDS_HOTKEY_REGISTER_ERROR; ++id) {
 		int length = LoadStringW(instance, id, strings[id - IDS_TITLE], 256);
 		if (length == 0 || length == 255) {
 			/* A required localized string is missing or may be truncated. */
@@ -89,6 +102,8 @@ static void show_settings_error(HWND window, SettingsResult result)
 		error_id = IDS_SETTINGS_UPDATE_ERROR;
 	} else if (result == SETTINGS_INVALID_APPLICATION_VISIBLE_WINDOW) {
 		error_id = IDS_SETTINGS_APPLICATION_VISIBLE_WINDOW_ERROR;
+	} else if (result == SETTINGS_INVALID_HOTKEY) {
+		error_id = IDS_SETTINGS_HOTKEY_ERROR;
 	}
 	MessageBoxW(window, text(error_id), text(IDS_TITLE), MB_OK | MB_ICONERROR);
 }
@@ -218,6 +233,16 @@ static BOOL update_prevention(HWND window)
 		(cpu_active && settings.cpu_usage_action == CPU_USAGE_KEEP_DISPLAY_AWAKE);
 	BOOL keep_unlocked = application_keep_unlocked ||
 		(cpu_active && settings.cpu_usage_action == CPU_USAGE_KEEP_UNLOCKED);
+	if (baseline_enabled) {
+		/* With a baseline, the strongest of the baseline and matching conditions wins. */
+		CpuUsageAction strongest = baseline_action;
+		if (keep_unlocked) {
+			strongest = CPU_USAGE_KEEP_UNLOCKED;
+		} else if (keep_display && strongest == CPU_USAGE_KEEP_SYSTEM_AWAKE) {
+			strongest = CPU_USAGE_KEEP_DISPLAY_AWAKE;
+		}
+		return set_prevention(window, TRUE, strongest);
+	}
 	return set_prevention(window, no_sleep || keep_display || keep_unlocked,
 		no_sleep ? CPU_USAGE_KEEP_SYSTEM_AWAKE :
 		keep_display ? CPU_USAGE_KEEP_DISPLAY_AWAKE : CPU_USAGE_KEEP_UNLOCKED);
@@ -395,6 +420,66 @@ static void sample_cpu(HWND window)
 	update_prevention(window);
 }
 
+/* Registers the configured hotkeys and reports newly failed registrations as a notification.
+ * window: Tray window that receives WM_HOTKEY and owns the notification.
+ */
+static void apply_hotkeys(HWND window)
+{
+	static const UINT names[HOTKEY_COUNT] = { IDS_MENU_AUTO, IDS_MENU_NO_SLEEP, IDS_MENU_KEEP_DISPLAY, IDS_MENU_KEEP_UNLOCKED };
+	NOTIFYICONDATAW icon = { 0 };
+	BOOL any_new_failure = FALSE;
+	int i;
+
+	lstrcpynW(icon.szInfo, text(IDS_HOTKEY_REGISTER_ERROR), ARRAYSIZE(icon.szInfo));
+	for (i = 0; i < HOTKEY_COUNT; ++i) {
+		Hotkey wanted = settings.hotkeys[i];
+		BOOL same = wanted.virtual_key == applied_hotkeys[i].virtual_key && wanted.modifiers == applied_hotkeys[i].modifiers;
+		if (hotkey_registered[i]) {
+			UnregisterHotKey(window, i + 1);
+			hotkey_registered[i] = FALSE;
+		}
+		if (!same) {
+			hotkey_failure_reported[i] = FALSE;
+		}
+		applied_hotkeys[i] = wanted;
+		if (!wanted.virtual_key) continue;
+		if (RegisterHotKey(window, i + 1, wanted.modifiers | MOD_NOREPEAT, wanted.virtual_key)) {
+			hotkey_registered[i] = TRUE;
+			hotkey_failure_reported[i] = FALSE;
+		} else if (!hotkey_failure_reported[i]) {
+			hotkey_failure_reported[i] = TRUE;
+			any_new_failure = TRUE;
+			if (wcslen(icon.szInfo) + wcslen(text(names[i])) + 3 < ARRAYSIZE(icon.szInfo)) {
+				wcscat_s(icon.szInfo, ARRAYSIZE(icon.szInfo), L"\n");
+				wcscat_s(icon.szInfo, ARRAYSIZE(icon.szInfo), text(names[i]));
+			}
+		}
+	}
+	if (any_new_failure) {
+		icon.cbSize = sizeof(icon);
+		icon.hWnd = window;
+		icon.uID = ID_TRAY;
+		icon.uFlags = NIF_INFO;
+		icon.dwInfoFlags = NIIF_WARNING;
+		lstrcpynW(icon.szInfoTitle, text(IDS_TITLE), ARRAYSIZE(icon.szInfoTitle));
+		Shell_NotifyIconW(NIM_MODIFY, &icon);
+	}
+}
+
+/* Unregisters all registered hotkeys.
+ * window: Window that owns the hotkeys.
+ */
+static void remove_hotkeys(HWND window)
+{
+	int i;
+	for (i = 0; i < HOTKEY_COUNT; ++i) {
+		if (hotkey_registered[i]) {
+			UnregisterHotKey(window, i + 1);
+			hotkey_registered[i] = FALSE;
+		}
+	}
+}
+
 /* Reloads settings and updates monitors and active conditions.
  * window: Tray window used for timers and error reporting.
  */
@@ -421,6 +506,7 @@ static void reload_settings(HWND window)
 		}
 		settings_free(&settings);
 		settings = updated;
+		apply_hotkeys(window);
 		if (start_cpu && !start_cpu_monitor(window)) {
 			/* CPU monitoring was enabled but could not be started. */
 			return;
@@ -470,6 +556,23 @@ static BOOL launch_settings(HWND window)
 	return TRUE;
 }
 
+/* Applies a baseline selection and refreshes sleep prevention.
+ * window: Tray window.
+ * command: One of the ID_BASELINE_* identifiers.
+ */
+static void apply_baseline(HWND window, UINT command)
+{
+	baseline_enabled = command != ID_BASELINE_AUTO;
+	if (command == ID_BASELINE_NO_SLEEP) {
+		baseline_action = CPU_USAGE_KEEP_SYSTEM_AWAKE;
+	} else if (command == ID_BASELINE_KEEP_DISPLAY) {
+		baseline_action = CPU_USAGE_KEEP_DISPLAY_AWAKE;
+	} else if (command == ID_BASELINE_KEEP_UNLOCKED) {
+		baseline_action = CPU_USAGE_KEEP_UNLOCKED;
+	}
+	update_prevention(window);
+}
+
 /* Displays the tray icon context menu.
  * window: Tray window that owns the menu.
  */
@@ -484,8 +587,20 @@ static void show_menu(HWND window)
 		MessageBoxW(window, text(IDS_MENU_CREATE_ERROR), text(IDS_TITLE), MB_OK | MB_ICONERROR);
 		return;
 	}
-	if (!AppendMenuW(menu, MF_STRING, ID_EXIT, text(IDS_EXIT)) || !GetCursorPos(&position)) {
-		/* The exit command or menu position could not be obtained. */
+	UINT selected = !baseline_enabled ? ID_BASELINE_AUTO :
+		baseline_action == CPU_USAGE_KEEP_SYSTEM_AWAKE ? ID_BASELINE_NO_SLEEP :
+		baseline_action == CPU_USAGE_KEEP_DISPLAY_AWAKE ? ID_BASELINE_KEEP_DISPLAY : ID_BASELINE_KEEP_UNLOCKED;
+
+	if (!AppendMenuW(menu, MF_STRING, ID_BASELINE_AUTO, text(IDS_MENU_AUTO)) ||
+		!AppendMenuW(menu, MF_SEPARATOR, 0, NULL) ||
+		!AppendMenuW(menu, MF_STRING, ID_BASELINE_NO_SLEEP, text(IDS_MENU_NO_SLEEP)) ||
+		!AppendMenuW(menu, MF_STRING, ID_BASELINE_KEEP_DISPLAY, text(IDS_MENU_KEEP_DISPLAY)) ||
+		!AppendMenuW(menu, MF_STRING, ID_BASELINE_KEEP_UNLOCKED, text(IDS_MENU_KEEP_UNLOCKED)) ||
+		!AppendMenuW(menu, MF_SEPARATOR, 0, NULL) ||
+		!AppendMenuW(menu, MF_STRING, ID_EXIT, text(IDS_EXIT)) ||
+		!CheckMenuRadioItem(menu, ID_BASELINE_AUTO, ID_BASELINE_KEEP_UNLOCKED, selected, MF_BYCOMMAND) ||
+		!GetCursorPos(&position)) {
+		/* A menu item or the menu position could not be obtained. */
 		DestroyMenu(menu);
 		MessageBoxW(window, text(IDS_MENU_DISPLAY_ERROR), text(IDS_TITLE), MB_OK | MB_ICONERROR);
 		return;
@@ -497,6 +612,8 @@ static void show_menu(HWND window)
 	PostMessageW(window, WM_NULL, 0, 0);
 	if (command == ID_EXIT) {
 		DestroyWindow(window);
+	} else if (command >= ID_BASELINE_AUTO && command <= ID_BASELINE_KEEP_UNLOCKED) {
+		apply_baseline(window, command);
 	}
 }
 
@@ -548,10 +665,15 @@ static LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LP
 		}
 		return 0;
 	case WM_TRAY:
-		if (wparam == ID_TRAY && lparam == WM_RBUTTONUP) {
+		if (wparam == ID_TRAY && (lparam == WM_RBUTTONUP || lparam == WM_LBUTTONUP)) {
 			show_menu(window);
 		} else if (wparam == ID_TRAY && lparam == WM_LBUTTONDBLCLK) {
 			launch_settings(window);
+		}
+		return 0;
+	case WM_HOTKEY:
+		if (wparam >= 1 && wparam <= HOTKEY_COUNT) {
+			apply_baseline(window, ID_BASELINE_AUTO + (UINT)wparam - 1);
 		}
 		return 0;
 	case WM_ENDSESSION:
@@ -562,6 +684,7 @@ static LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LP
 	{
 		NOTIFYICONDATAW icon = { 0 };
 		stop_cpu_monitor(window);
+		remove_hotkeys(window);
 		if (!update_close(&update_state)) OutputDebugStringW(L"AutoAwake: Windows Update settings restoration failed during shutdown.\n");
 		KillTimer(window, ID_APPLICATION_TIMER);
 		settings_free(&settings);

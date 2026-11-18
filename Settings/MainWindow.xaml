@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:Kobachi.AutoAwake"
+    xmlns:controls="using:Kobachi.AutoAwake.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:Kobachi.AutoAwake.Models"
     mc:Ignorable="d">
@@ -48,7 +49,8 @@
                 <NavigationViewItem x:Uid="AboutNavigation" x:Name="AboutNavigation" Icon="Help" />
             </NavigationView.FooterMenuItems>
             <Grid Padding="24">
-                <StackPanel x:Name="GeneralContent" Spacing="20" VerticalAlignment="Top" Visibility="Collapsed">
+                <ScrollViewer x:Name="GeneralContent" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="20" VerticalAlignment="Top">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock x:Uid="IntervalLabel" VerticalAlignment="Center" />
                         <NumberBox x:Uid="IntervalInput" x:Name="IntervalInput"
@@ -66,7 +68,23 @@
                             <Button x:Uid="RemoveStartup" x:Name="RemoveStartup" IsEnabled="False" Click="RemoveStartup_Click" />
                         </StackPanel>
                     </StackPanel>
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Uid="ShortcutHeading" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Grid ColumnSpacing="12" RowSpacing="8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <TextBlock x:Uid="ShortcutAuto" VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <controls:HotkeyBox x:Name="AutoHotkey" x:Uid="ShortcutAutoBox" Grid.Column="1" HorizontalAlignment="Right" Value="{x:Bind Settings.Hotkeys.Auto, Mode=OneWay}" />
+                            <TextBlock x:Uid="ShortcutNoSleep" Grid.Row="1" VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <controls:HotkeyBox x:Name="NoSleepHotkey" x:Uid="ShortcutNoSleepBox" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Value="{x:Bind Settings.Hotkeys.NoSleep, Mode=OneWay}" />
+                            <TextBlock x:Uid="ShortcutKeepDisplay" Grid.Row="2" VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <controls:HotkeyBox x:Name="KeepDisplayHotkey" x:Uid="ShortcutKeepDisplayBox" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" Value="{x:Bind Settings.Hotkeys.KeepDisplay, Mode=OneWay}" />
+                            <TextBlock x:Uid="ShortcutKeepUnlocked" Grid.Row="3" VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <controls:HotkeyBox x:Name="KeepUnlockedHotkey" x:Uid="ShortcutKeepUnlockedBox" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" Value="{x:Bind Settings.Hotkeys.KeepUnlocked, Mode=OneWay}" />
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
+                </ScrollViewer>
                 <StackPanel x:Name="CpuContent" Spacing="20" VerticalAlignment="Top" Visibility="Collapsed">
                     <CheckBox x:Uid="CpuEnabled" x:Name="CpuEnabled"
                               IsChecked="{x:Bind Settings.CpuUsageEnabled, Mode=TwoWay}" />

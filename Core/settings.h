@@ -22,6 +22,21 @@ typedef struct ApplicationSettings {
 	BOOL visible_window_only;
 } ApplicationSettings;
 
+/* Indexes of the baseline hotkeys. */
+typedef enum HotkeyId {
+	HOTKEY_AUTO,
+	HOTKEY_NO_SLEEP,
+	HOTKEY_KEEP_DISPLAY,
+	HOTKEY_KEEP_UNLOCKED,
+	HOTKEY_COUNT
+} HotkeyId;
+
+/* A global hotkey; virtual_key is 0 when the hotkey is not configured. */
+typedef struct Hotkey {
+	UINT modifiers;
+	UINT virtual_key;
+} Hotkey;
+
 /* Holds the CPU monitoring configuration and application monitoring rules. */
 typedef struct AwakeSettings {
 	DWORD interval_seconds;
@@ -31,6 +46,7 @@ typedef struct AwakeSettings {
 	ApplicationSettings *applications;
 	size_t application_count;
 	BOOL suppress_windows_update;
+	Hotkey hotkeys[HOTKEY_COUNT];
 } AwakeSettings;
 
 typedef enum SettingsResult {
@@ -44,8 +60,15 @@ typedef enum SettingsResult {
 	SETTINGS_INVALID_APPLICATION_PATH,
 	SETTINGS_INVALID_APPLICATION_ACTION,
 	SETTINGS_INVALID_APPLICATION_VISIBLE_WINDOW,
-	SETTINGS_INVALID_SUPPRESS_WINDOWS_UPDATE
+	SETTINGS_INVALID_SUPPRESS_WINDOWS_UPDATE,
+	SETTINGS_INVALID_HOTKEY
 } SettingsResult;
+
+/* Parses a hotkey such as "Ctrl+Alt+F9"; at least one modifier is required.
+ * value: Hotkey text.
+ * hotkey: Receives the parsed hotkey on success.
+ */
+BOOL settings_parse_hotkey(const wchar_t *value, Hotkey *hotkey);
 
 /* Loads settings from the default location, creating them if missing.
  * settings: Receives the loaded settings on success; release them with settings_free.

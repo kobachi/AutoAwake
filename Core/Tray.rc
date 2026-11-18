@@ -42,6 +42,12 @@ BEGIN
     IDS_SETTINGS_UPDATE_ERROR "General/SuppressWindowsUpdate must be 0 or 1."
     IDS_UPDATE_ERROR "Could not change or restore Windows Update settings. Administrator access may be required, or another session may be using them. AutoAwake will exit; retry as administrator to recover."
     IDS_UPDATE_ROLLBACK_ERROR "Windows Update rollback failed. AutoAwake will retry cleanup while exiting; if needed, restart as administrator to restore the saved settings."
+    IDS_MENU_AUTO "Auto"
+    IDS_MENU_NO_SLEEP "Prevent sleep"
+    IDS_MENU_KEEP_DISPLAY "Prevent display off"
+    IDS_MENU_KEEP_UNLOCKED "Prevent screen saver and lock"
+    IDS_SETTINGS_HOTKEY_ERROR "General/Hotkey* must be Modifier+Key (Ctrl, Alt, Shift or Win plus A-Z, 0-9, F1-F24, Space, Enter, Tab, Esc, arrows, Home, End, PageUp, PageDown, Insert, Delete or Num0-Num9) and must not be duplicated."
+    IDS_HOTKEY_REGISTER_ERROR "Could not register shortcut keys. Another application may be using them:"
 END
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
@@ -80,4 +86,10 @@ BEGIN
     IDS_SETTINGS_UPDATE_ERROR "General/SuppressWindowsUpdate には 0 または 1 を指定してください。"
     IDS_UPDATE_ERROR "Windows Update の設定を変更または復元できません。管理者権限が必要か、別のセッションで使用中です。管理者として再実行して復元してください。"
     IDS_UPDATE_ROLLBACK_ERROR "Windows Update 設定の復元に失敗しました。終了時に再試行します。必要に応じて管理者として再起動してください。"
+    IDS_MENU_AUTO "自動"
+    IDS_MENU_NO_SLEEP "スリープ防止"
+    IDS_MENU_KEEP_DISPLAY "画面オフ防止"
+    IDS_MENU_KEEP_UNLOCKED "スクリーンセーバーと自動ロックを防止"
+    IDS_SETTINGS_HOTKEY_ERROR "General/Hotkey* には、修飾キー (Ctrl、Alt、Shift、Win) とキー (A-Z、0-9、F1-F24、Space、Enter、Tab、Esc、矢印、Home、End、PageUp、PageDown、Insert、Delete、Num0-Num9) を + でつないで指定してください。重複は指定できません。"
+    IDS_HOTKEY_REGISTER_ERROR "ショートカットキーを登録できませんでした。他のアプリが使用中の可能性があります:"
 END

@@ -54,4 +54,18 @@
   <data name="ApplicationPickerError" xml:space="preserve"><value>Could not add the executable file.</value></data>
   <data name="ApplicationDropInvalid" xml:space="preserve"><value>Drop an executable file (.exe).</value></data>
   <data name="DialogClose" xml:space="preserve"><value>Close</value></data>
+  <data name="ShortcutHeading.Text" xml:space="preserve"><value>Shortcut keys</value></data>
+  <data name="ShortcutAuto.Text" xml:space="preserve"><value>Auto</value></data>
+  <data name="ShortcutNoSleep.Text" xml:space="preserve"><value>Prevent sleep</value></data>
+  <data name="ShortcutKeepDisplay.Text" xml:space="preserve"><value>Prevent display off</value></data>
+  <data name="ShortcutKeepUnlocked.Text" xml:space="preserve"><value>Prevent screen saver and idle lock</value></data>
+  <data name="ShortcutAutoBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Auto shortcut key</value></data>
+  <data name="ShortcutNoSleepBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Prevent sleep shortcut key</value></data>
+  <data name="ShortcutKeepDisplayBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Prevent display off shortcut key</value></data>
+  <data name="ShortcutKeepUnlockedBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Prevent screen saver and idle lock shortcut key</value></data>
+  <data name="HotkeyUnavailable.Subtitle" xml:space="preserve"><value>This shortcut key cannot be used</value></data>
+  <data name="HotkeyNone" xml:space="preserve"><value>None</value></data>
+  <data name="HotkeyPrompt.Subtitle" xml:space="preserve"><value>Press a shortcut key (Delete to clear)</value></data>
+  <data name="HotkeyModifierRequired" xml:space="preserve"><value>Hold Ctrl, Alt, Shift or Win</value></data>
+  <data name="HotkeyKeyUnsupported" xml:space="preserve"><value>This key cannot be used</value></data>
 </root>

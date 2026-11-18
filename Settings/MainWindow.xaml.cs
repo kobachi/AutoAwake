@@ -17,6 +17,7 @@ using Windows.ApplicationModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 using Windows.Storage;
+using Kobachi.AutoAwake.Controls;
 using Kobachi.AutoAwake.Models;
 using Kobachi.AutoAwake.Persistence;
 
@@ -57,6 +58,7 @@ public sealed partial class MainWindow {
 		settingsStore = SettingsStore.OpenDefault();
 		settingsStore.SaveFailed += SettingsError.ShowSaveError;
 		InitializeComponent();
+		ConfigureShortcutBoxes();
 
 		// Bind the settings and application information to the view.
 		AutoAwakeNotRunningNotice.IsOpen = !IsAutoAwakeRunning();
@@ -109,6 +111,28 @@ public sealed partial class MainWindow {
 		AppWindow.Changed += AppWindow_Changed;
 		Activated += MainWindow_Activated;
 		Closed += MainWindow_Closed;
+	}
+
+	/// <summary>Connects shortcut input to validation and the corresponding setting.</summary>
+	private void ConfigureShortcutBoxes() {
+		var hotkeys = Settings.Hotkeys;
+		ConfigureShortcutBox(AutoHotkey, () => [hotkeys.NoSleep, hotkeys.KeepDisplay, hotkeys.KeepUnlocked], value => hotkeys.Auto = value);
+		ConfigureShortcutBox(NoSleepHotkey, () => [hotkeys.Auto, hotkeys.KeepDisplay, hotkeys.KeepUnlocked], value => hotkeys.NoSleep = value);
+		ConfigureShortcutBox(KeepDisplayHotkey, () => [hotkeys.Auto, hotkeys.NoSleep, hotkeys.KeepUnlocked], value => hotkeys.KeepDisplay = value);
+		ConfigureShortcutBox(KeepUnlockedHotkey, () => [hotkeys.Auto, hotkeys.NoSleep, hotkeys.KeepDisplay], value => hotkeys.KeepUnlocked = value);
+	}
+
+	/// <summary>Tests a captured shortcut before saving it and reports probe errors.</summary>
+	private static void ConfigureShortcutBox(HotkeyBox box, Func<string[]> otherAssignments, Action<string> save) {
+		box.CanAssign = (modifiers, key) => {
+			try {
+				return ShortcutKeyAvailability.IsAvailable(modifiers, key, otherAssignments());
+			} catch (Win32Exception error) {
+				SettingsError.ShowSaveError(error.Message);
+				return false;
+			}
+		};
+		box.ValueCommitted += save;
 	}
 
 	/// <summary>Saves the window bounds when the debounce timer elapses.</summary>

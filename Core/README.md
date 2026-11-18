@@ -1,5 +1,7 @@
 # AutoAwake settings
 
+Clicking the tray icon shows a menu with a baseline sleep prevention choice (Auto, Prevent sleep, Prevent display off, Prevent screen saver and lock) and Exit. The baseline is the minimum mode: the strongest of it and any matching condition (NoSleep < KeepDisplay < KeepUnlocked) is applied, and it is active even with no matching condition. Auto keeps the condition-only behavior below. It applies only while running, is not saved, and resets to Auto at each launch.
+
 Double-click the tray icon to launch `AutoAwakeSettings.exe` from the same directory as `AutoAwakeCore.exe`. Launching `AutoAwakeCore.exe` again also opens Settings instead of starting another tray instance. Only one Settings window can run at a time; a subsequent Settings launch exits without showing anything. An error is shown if Settings cannot be launched.
 
 AutoAwake creates `%APPDATA%\AutoAwake\settings.ini` on first launch. The file is an INI file encoded as UTF-16 LE with a byte order mark (BOM). Edit it with an editor that preserves this encoding; AutoAwake reloads changes while running.
@@ -18,6 +20,7 @@ SuppressWindowsUpdate=1
 - `CpuUsageThreshold`: CPU usage threshold in whole percent from `0` to `100`; default `80`.
 - `CpuUsageAction`: action to apply while the CPU condition matches; default `NoSleep`. Values are case-insensitive.
 - `SuppressWindowsUpdate`: request the Windows Update registry changes described below (`1` or `0`); default `1`.
+- `HotkeyAuto`, `HotkeyNoSleep`, `HotkeyKeepDisplay`, `HotkeyKeepUnlocked`: optional global shortcut keys that select the matching baseline from the tray menu. The format is modifiers and one key joined by `+`, for example `Ctrl+Alt+F9`; case and spaces around `+` are ignored. At least one modifier (`Ctrl`, `Alt`, `Shift`, `Win`) is required. Keys are `A`-`Z`, `0`-`9`, `F1`-`F24`, `Space`, `Enter`, `Tab`, `Esc`, `Up`, `Down`, `Left`, `Right`, `Home`, `End`, `PageUp`, `PageDown`, `Insert`, `Delete` and `Num0`-`Num9`. Omitted or empty values disable the shortcut key (default). Invalid or duplicated values are settings errors. If Windows cannot register a shortcut key (for example, another application uses it), that shortcut key is skipped and a notification is shown once; the others keep working.
 
 ## Actions
 

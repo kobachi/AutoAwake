@@ -453,6 +453,21 @@ int main(int argc, char **argv)
 	CHECK(!active && last_flags == ES_CONTINUOUS && monitor_errors == 0 && update_diagnostics == 6);
 	CHECK(set_prevention(NULL, FALSE, CPU_USAGE_KEEP_SYSTEM_AWAKE) && !update_mock_enabled);
 	CHECK(DeleteFileW(ini));
+	{
+		Hotkey hotkey = { 0 };
+		CHECK(settings_parse_hotkey(L"Ctrl+Alt+F9", &hotkey) && hotkey.modifiers == (MOD_CONTROL | MOD_ALT) && hotkey.virtual_key == VK_F9);
+		CHECK(settings_parse_hotkey(L" shift + win + a ", &hotkey) && hotkey.modifiers == (MOD_SHIFT | MOD_WIN) && hotkey.virtual_key == 'A');
+		CHECK(settings_parse_hotkey(L"Ctrl+Num5", &hotkey) && hotkey.virtual_key == VK_NUMPAD5);
+		CHECK(settings_parse_hotkey(L"Ctrl+PageDown", &hotkey) && hotkey.virtual_key == VK_NEXT);
+		CHECK(!settings_parse_hotkey(L"F9", &hotkey));
+		CHECK(!settings_parse_hotkey(L"Ctrl", &hotkey));
+		CHECK(!settings_parse_hotkey(L"Ctrl+Ctrl+A", &hotkey));
+		CHECK(!settings_parse_hotkey(L"Ctrl+A+B", &hotkey));
+		CHECK(!settings_parse_hotkey(L"Ctrl+F25", &hotkey));
+		CHECK(!settings_parse_hotkey(L"Ctrl+Foo", &hotkey));
+		CHECK(!settings_parse_hotkey(L"Ctrl+", &hotkey));
+		CHECK(!settings_parse_hotkey(L"", &hotkey));
+	}
 	puts("settings and monitor tests passed");
 	return 0;
 }

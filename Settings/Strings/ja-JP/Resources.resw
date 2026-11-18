@@ -54,4 +54,18 @@
   <data name="ApplicationPickerError" xml:space="preserve"><value>実行ファイルを追加できませんでした。</value></data>
   <data name="ApplicationDropInvalid" xml:space="preserve"><value>実行ファイル（.exe）をドロップしてください。</value></data>
   <data name="DialogClose" xml:space="preserve"><value>閉じる</value></data>
+  <data name="ShortcutHeading.Text" xml:space="preserve"><value>ショートカットキー</value></data>
+  <data name="ShortcutAuto.Text" xml:space="preserve"><value>自動</value></data>
+  <data name="ShortcutNoSleep.Text" xml:space="preserve"><value>スリープ防止</value></data>
+  <data name="ShortcutKeepDisplay.Text" xml:space="preserve"><value>画面オフ防止</value></data>
+  <data name="ShortcutKeepUnlocked.Text" xml:space="preserve"><value>スクリーンセーバーと自動ロックを防止</value></data>
+  <data name="ShortcutAutoBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>自動のショートカットキー</value></data>
+  <data name="ShortcutNoSleepBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>スリープ防止のショートカットキー</value></data>
+  <data name="ShortcutKeepDisplayBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>画面オフ防止のショートカットキー</value></data>
+  <data name="ShortcutKeepUnlockedBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>スクリーンセーバーと自動ロックを防止するショートカットキー</value></data>
+  <data name="HotkeyUnavailable.Subtitle" xml:space="preserve"><value>このショートカットキーは使用できません</value></data>
+  <data name="HotkeyNone" xml:space="preserve"><value>なし</value></data>
+  <data name="HotkeyPrompt.Subtitle" xml:space="preserve"><value>ショートカットキーを押してください（Deleteで削除）</value></data>
+  <data name="HotkeyModifierRequired" xml:space="preserve"><value>Ctrl、Alt、Shift、Win のいずれかを押しながら入力してください</value></data>
+  <data name="HotkeyKeyUnsupported" xml:space="preserve"><value>このキーは使用できません</value></data>
 </root>
