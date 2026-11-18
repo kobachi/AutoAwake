@@ -13,7 +13,7 @@
   <Identity
     Name="kobachi.AutoAwake"
     Publisher="CN=5EFF23C2-50A6-4932-BF59-781CCF6E903B"
-    Version="1.0.0.0" />
+    Version="1.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="293f3103-ea2f-46b8-8eaa-e68b10d9e06e" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
