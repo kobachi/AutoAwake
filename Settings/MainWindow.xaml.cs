@@ -263,7 +263,6 @@ public sealed partial class MainWindow {
 		var resources = new ResourceLoader();
 		StartupNotice.IsOpen = true;
 		StartupNotice.Message = resources.GetString("StartupErrorTitle") + "\n" + error.Message;
-		StartupStateMessage.Text = StartupNotice.Message;
 	}
 
 	/// <summary>Refreshes startup-task state and optionally applies a requested state change.</summary>
@@ -277,8 +276,7 @@ public sealed partial class MainWindow {
 		var resources = new ResourceLoader();
 		try {
 			if (!StartupRegistration.IsPackaged()) {
-				StartupStateMessage.Text = resources.GetString("StartupUnavailable");
-				StartupNotice.Message = StartupStateMessage.Text;
+				StartupNotice.Message = resources.GetString("StartupUnavailable");
 				StartupNotice.IsOpen = true;
 				return;
 			}
@@ -297,7 +295,6 @@ public sealed partial class MainWindow {
 				StartupTaskState.EnabledByPolicy => "StartupStateEnabledByPolicy",
 				_ => throw new InvalidOperationException("Unknown startup task state: " + state)
 			};
-			StartupStateMessage.Text = resources.GetString(key);
 			var enabled = state == StartupTaskState.Enabled || state == StartupTaskState.EnabledByPolicy;
 			StartupNotice.IsOpen = !enabled;
 			StartupNotice.Message = resources.GetString(key);

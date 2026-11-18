@@ -65,7 +65,6 @@
                             <Button x:Uid="RegisterStartup" x:Name="RegisterStartup" IsEnabled="False" Click="RegisterStartup_Click" />
                             <Button x:Uid="RemoveStartup" x:Name="RemoveStartup" IsEnabled="False" Click="RemoveStartup_Click" />
                         </StackPanel>
-                        <TextBlock x:Name="StartupStateMessage" TextWrapping="Wrap" />
                     </StackPanel>
                 </StackPanel>
                 <StackPanel x:Name="CpuContent" Spacing="20" VerticalAlignment="Top" Visibility="Collapsed">
